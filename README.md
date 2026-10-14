@@ -4,7 +4,7 @@ The shared base stylesheet of the **yuuu** suite, shipped as a Symfony bundle: y
 
 - One file, `yuuu-base.css`: design tokens as CSS custom properties, a small set of BEM-light classes, automatic dark mode.
 - **Neutral** by design. Each app brings its personality through four brand tokens.
-- **WCAG AA** contrast, tested: 4.5:1 for text, 3:1 for control outlines, in light *and* dark mode.
+- **WCAG AA required, AAA targeted.** Tested in light *and* dark mode: every text pair reaches 4.5:1 (AA), control outlines 3:1. Every default text pair at rest also reaches **7:1 (AAA)**; see §7.
 - **No external resources**: no web fonts, no CDN, no remote `url()`, no `@import`. Works under CSP `style-src 'self'`, with no inline styles needed.
 - A Twig function, `yuuu_ui_stylesheet()`, that links the file with a content fingerprint for cache busting, computed once when the container is compiled.
 
@@ -91,7 +91,7 @@ Run it on **every deploy**, not only on the first one. The fingerprint in the UR
 
 - **changes only when the content changes**, so browsers can cache the file for as long as you like (`Cache-Control: max-age=31536000, immutable` on `/bundles/yuuuui/` is safe as long as every page links it through the function, never by its bare path);
 - **is computed once, when the container is compiled**, not per request. Rendering the function is a string concatenation. In debug mode the stylesheet is a resource of the container, so editing it rebuilds the container and the fingerprint. In production the deploy's `cache:clear` does it;
-- is **root-relative**. An app served from a sub-path (`https://example.com/app/`) is not supported in v0.1.0.
+- is **root-relative**. An app served from a sub-path (`https://example.com/app/`) is not supported yet.
 
 ## 4. The app's own layer
 
@@ -126,12 +126,31 @@ To use different values in dark mode, add your own dark block after it:
 |---|---|---|---|
 | `--yuuu-color-primary` | `#1b1f24` | `#e8eaed` | Background of `.btn` / `.btn--primary` |
 | `--yuuu-color-primary-text` | `#ffffff` | `#111111` | Text on the primary colour |
-| `--yuuu-color-accent` | `#5b636e` | `#a0a7b1` | The stripe on top of `.card` |
+| `--yuuu-color-accent` | `#4e545e` | `#a0a7b1` | The stripe on top of `.card` |
 | `--yuuu-color-accent-text` | `#ffffff` | `#111111` | Text on the accent colour (for the app's own use) |
 
-**You answer for the contrast of your own pair.** The base tests its defaults; it cannot test yours. Text on the primary colour must reach 4.5:1. Pick the text colour with the WCAG relative luminance, as yuuuID does for each company's colours: white or near-black (`#111111`), whichever contrasts more. For the CRM, `#ffffff` on `#4055ff` gives **5.30:1**.
+**You answer for the contrast of your own pair.** The base tests its defaults; it cannot test yours. Text on the primary colour must reach **4.5:1** (AA, required). Pick the text colour with the WCAG relative luminance, as yuuuID does for each company's colours: white or near-black (`#111111`), whichever contrasts more. For the CRM, `#ffffff` on `#4055ff` gives **5.30:1**: it passes AA.
 
 The brand colour is only ever used as a **background** with its own text token, and as an ornament. Links, focus rings, form outlines and status colours stay neutral on purpose: a brand colour that reads well on white disappears on the dark background, and the other way round.
+
+`.btn:hover` and `.btn:active` dim the whole button, text included, with `filter: brightness(0.92)` and `brightness(0.85)`. That lowers the ratio of a pair with white text: `#4055ff` with white drops from 5.30:1 to 5.07:1 on hover and 4.82:1 while pressed. Leave some headroom above 4.5:1.
+
+### Brand overrides and AAA
+
+AA is the requirement; AAA (7:1) is an **option** the app can take for its own brand. A brand colour used as the background of normal-size text reaches AAA only if it gets 7:1 with its `-text` pair. Mid-tones often cannot, with pure black or with pure white: `#4055ff` gives 5.30:1 with white and 3.96:1 with black.
+
+The way out is to keep the bright tone for what carries no text (the `.card` stripe through `--yuuu-color-accent`, the app's own ornaments) and to give `--yuuu-color-primary` a **darker shade of the same hue** for the surfaces that carry text. For `#4055ff` (HSL 233°, 100%, 63%), the closest shade with the same hue and saturation that reaches 7:1 with white is **`#1b34ff`** (lightness 55%): **7.04:1**. Mixed with black instead of lowering the HSL lightness, the closest is `#3546d3` (7.08:1).
+
+```css
+/* Optional: the CRM's brand at AAA. */
+:root {
+    --yuuu-color-primary: #1b34ff;      /* 7.04:1 with white */
+    --yuuu-color-primary-text: #ffffff;
+    --yuuu-color-accent: #4055ff;       /* the bright tone, no text on it */
+}
+```
+
+Even at 7:1 at rest, the hover and pressed filters bring the pair below 7:1 (`#1b34ff`: 6.61:1 hovered, 6.20:1 pressed), still well above AA. A shade that holds 7:1 while pressed too is `#001cfe` (8.09:1 at rest). In dark mode the same applies with near-black text: `#8c99ff` with `#111111` gives 7.30:1 at rest.
 
 ### Other tokens
 
@@ -306,7 +325,7 @@ Works on `<button>`, `<input type="submit">` and `<a>`.
 - `.btn--secondary`: a neutral outlined button, for every other action.
 - `.btn--danger`: destructive actions, in the suite's red (never the brand's).
 - `.btn--small`: compact, for inline actions in table rows and in the nav. Still 32px tall, above the WCAG 2.5.8 minimum target.
-- Disabled: the `disabled` attribute on a button, `aria-disabled="true"` on a link.
+- Disabled: the `disabled` attribute on a button, `aria-disabled="true"` on a link. Dimmed to 60% opacity so it reads as unavailable; WCAG exempts inactive controls from contrast (§7).
 
 ```html
 <button class="btn btn--primary">Save</button>
@@ -353,7 +372,7 @@ With the loop above, the flash types the app uses must be `success`, `warning`, 
 
 #### `.muted`
 
-Secondary text: dates, counters, hints. Still 4.5:1.
+Secondary text: dates, counters, hints. Still 7:1 (AAA) on the page and on cards.
 
 ```html
 <p class="muted">Last sign-in 3 days ago</p>
@@ -380,34 +399,70 @@ Hidden on screen, read by screen readers: the label of a search box whose purpos
 
 ## 6. Dark mode
 
-Automatic, from the operating system's preference (`prefers-color-scheme: dark`). Every colour token has a dark value, and `color-scheme: light dark` makes the browser draw native widgets (checkboxes, scrollbars, date pickers) in the matching scheme. There is no manual toggle in v0.1.0.
+Automatic, from the operating system's preference (`prefers-color-scheme: dark`). Every colour token has a dark value, and `color-scheme: light dark` makes the browser draw native widgets (checkboxes, scrollbars, date pickers) in the matching scheme. There is no manual toggle yet.
 
 An app that overrides tokens decides whether its values apply to both schemes or only one (see §4).
 
 ## 7. Accessibility and contrast
 
-`tests/Unit/Styles/StylesheetContrastTest.php` reads the real token values from the stylesheet and checks every pair the CSS paints together, in both schemes. Current values:
+**Policy: WCAG AA required, AAA targeted where reasonable.**
 
-| Pair | Light | Dark | Minimum |
+- **Text** must reach **4.5:1** (WCAG 1.4.3, AA): the suite fails below it, at rest and on hovered or pressed buttons.
+- **AAA, 7:1** (WCAG 1.4.6) is the target for the default values wherever it does not spoil the neutral look. It is not a gate: the suite does not fail between 4.5:1 and 7:1. Today every default text pair **at rest** reaches it, in both schemes.
+- **Non-text** (control outlines, the invalid border, the focus ring) must reach **3:1** (WCAG 1.4.11). WCAG has no AAA level for it.
+
+`tests/Unit/Styles/StylesheetContrastTest.php` reads the real token values from the stylesheet and checks every pair the CSS paints together, in both schemes. It also fails when a token is painted as a text colour or a background without a pair in its lists, and when a `brightness()` filter is not checked. Current values (AAA = 7:1 or more):
+
+| Text pair | Light | Dark | Required | AAA |
+|---|---|---|---|---|
+| `text` on `bg` | 15.31:1 | 15.68:1 | 4.5 | yes |
+| `text` on `surface` | 16.56:1 | 14.46:1 | 4.5 | yes |
+| `text-muted` on `bg` | 7.05:1 | 7.79:1 | 4.5 | yes |
+| `text-muted` on `surface` | 7.63:1 | 7.18:1 | 4.5 | yes |
+| `danger-text` on `surface` (`.field-error`) | 7.71:1 | 8.98:1 | 4.5 | yes |
+| `danger-text` on `bg` | 7.13:1 | 9.73:1 | 4.5 | yes |
+| `success-text` on `success-bg` | 7.07:1 | 10.14:1 | 4.5 | yes |
+| `warning-text` on `warning-bg` | 7.21:1 | 10.45:1 | 4.5 | yes |
+| `danger-text` on `danger-bg` | 7.10:1 | 8.98:1 | 4.5 | yes |
+| `info-text` on `info-bg` | 7.05:1 | 9.88:1 | 4.5 | yes |
+| `neutral-text` on `neutral-bg` | 8.41:1 | 9.90:1 | 4.5 | yes |
+| `text` on `success-bg` (a link in a flash) | 15.70:1 | 13.61:1 | 4.5 | yes |
+| `text` on `warning-bg` | 15.87:1 | 13.41:1 | 4.5 | yes |
+| `text` on `danger-bg` | 15.23:1 | 14.46:1 | 4.5 | yes |
+| `text` on `info-bg` | 15.41:1 | 14.50:1 | 4.5 | yes |
+| `text` on `neutral-bg` | 15.03:1 | 12.60:1 | 4.5 | yes |
+| `primary-text` on `primary` (defaults) | 16.56:1 | 15.67:1 | 4.5 | yes |
+| `accent-text` on `accent` (defaults) | 7.63:1 | 7.78:1 | 4.5 | yes |
+| `danger-solid-text` on `danger-solid` | 7.71:1 | 7.09:1 | 4.5 | yes |
+
+| Hovered or pressed button (text and background dimmed) | Light | Dark | Required | AAA |
+|---|---|---|---|---|
+| `.btn--primary` hovered, `brightness(0.92)` | 14.22:1 | 13.19:1 | 4.5 | yes |
+| `.btn--primary` pressed, `brightness(0.85)` | 12.36:1 | 11.39:1 | 4.5 | yes |
+| `.btn--danger` hovered, `brightness(0.92)` | 7.21:1 | 6.07:1 | 4.5 | light only |
+| `.btn--danger` pressed, `brightness(0.85)` | 6.70:1 | 5.35:1 | 4.5 | no |
+| `.btn--secondary` pressed (text dimmed, on `surface`) | 17.44:1 | 10.28:1 | 4.5 | yes |
+| `.btn--secondary` pressed (text dimmed, on `bg`) | 16.13:1 | 11.15:1 | 4.5 | yes |
+
+The danger button stays below 7:1 while hovered or pressed on purpose: holding 7:1 under the filter would need a much darker red in light mode and a pale salmon in dark mode, and the state lasts only as long as the pointer or the press.
+
+| Non-text pair | Light | Dark | Required |
 |---|---|---|---|
-| `text` on `bg` | 15.31:1 | 15.68:1 | 4.5 |
-| `text` on `surface` | 16.56:1 | 14.46:1 | 4.5 |
-| `text-muted` on `bg` | 5.62:1 | 7.79:1 | 4.5 |
-| `text-muted` on `surface` | 6.08:1 | 7.18:1 | 4.5 |
-| `danger-text` on `surface` (`.field-error`) | 6.57:1 | 8.98:1 | 4.5 |
-| `danger-text` on `bg` | 6.08:1 | 9.73:1 | 4.5 |
-| `success-text` on `success-bg` | 5.40:1 | 10.14:1 | 4.5 |
-| `warning-text` on `warning-bg` | 7.21:1 | 10.45:1 | 4.5 |
-| `danger-text` on `danger-bg` | 6.05:1 | 8.98:1 | 4.5 |
-| `info-text` on `info-bg` | 5.57:1 | 9.88:1 | 4.5 |
-| `neutral-text` on `neutral-bg` | 8.41:1 | 9.90:1 | 4.5 |
-| `primary-text` on `primary` (defaults) | 16.56:1 | 15.67:1 | 4.5 |
-| `accent-text` on `accent` (defaults) | 6.08:1 | 7.78:1 | 4.5 |
-| `danger-solid-text` on `danger-solid` | 6.57:1 | 6.78:1 | 4.5 |
 | `border-strong` on `surface` (field outline, button ring) | 3.35:1 | 3.38:1 | 3 |
 | `border-strong` on `bg` | 3.09:1 | 3.67:1 | 3 |
-| `danger-solid` on `surface` (danger button edge) | 6.57:1 | 6.25:1 | 3 |
-| `danger-solid` on `bg` | 6.08:1 | 6.78:1 | 3 |
+| `danger-text` on `surface` (invalid field border) | 7.71:1 | 8.98:1 | 3 |
+| `danger-text` on `bg` | 7.13:1 | 9.73:1 | 3 |
+| `danger-solid` on `surface` (danger button edge) | 7.71:1 | 6.55:1 | 3 |
+| `danger-solid` on `bg` | 7.13:1 | 7.10:1 | 3 |
+| `text` on `surface` (focus ring) | 16.56:1 | 14.46:1 | 3 |
+| `text` on `bg` | 15.31:1 | 15.68:1 | 3 |
+
+Not tested, on purpose:
+
+- **Disabled controls** (`disabled`, `aria-disabled="true"`): WCAG 1.4.3 and 1.4.6 exempt inactive components. They are dimmed to 60% opacity so they read as unavailable, which takes them below 4.5:1. Do not put information that must be read only in a disabled control.
+- **Placeholders**: the base does not style `::placeholder`, so the browser's default applies, which is usually below 7:1. Use a `<label>` for anything the user must read, never only a placeholder.
+- **`.muted` inside a flash or a badge**: `.muted` is tested on the page and on cards. On the tinted backgrounds of flashes it ranges from 6.26:1 to 7.31:1 (AA, not always AAA).
+- The `.card` accent stripe: an ornament, it carries no information.
 
 Also: a visible focus ring everywhere (`:focus-visible`), button borders in forced-colours (Windows high contrast) mode, no transitions under `prefers-reduced-motion`, 44px controls (32px for `.btn--small`).
 
@@ -426,7 +481,7 @@ No `'unsafe-inline'`, and no `style=` attributes in templates: the classes cover
 [Semantic versioning](https://semver.org/), with git tags `vX.Y.Z`. Before 1.0, a **minor** version (0.1 → 0.2) may break: renaming or removing a class or token, or changing what a class looks like in a way a layout depends on. A **patch** (0.1.0 → 0.1.1) only fixes, without renaming anything. Require it with a caret:
 
 ```json
-"yuuues/yuuu-ui": "^0.1"
+"yuuues/yuuu-ui": "^0.2"
 ```
 
 Every class and token documented here is public API. Everything else in the file is not.

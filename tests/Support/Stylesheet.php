@@ -83,6 +83,21 @@ final class Stylesheet
         return (max($la, $lb) + 0.05) / (min($la, $lb) + 0.05);
     }
 
+    /**
+     * What CSS `filter: brightness($factor)` makes of a `#rrggbb` colour:
+     * every sRGB channel multiplied by the factor, as browsers apply the
+     * filter functions.
+     */
+    public static function brightness(string $hex, float $factor): string
+    {
+        self::luminance($hex);
+
+        return '#'.implode('', array_map(
+            static fn (string $pair): string => \sprintf('%02x', min(255, (int) round(hexdec($pair) * $factor))),
+            str_split(substr($hex, 1), 2),
+        ));
+    }
+
     /** WCAG 2.x relative luminance of a `#rrggbb` colour. */
     public static function luminance(string $hex): float
     {

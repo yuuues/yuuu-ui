@@ -17,8 +17,12 @@
  *
  * CSP: no inline styles and no external resources (no web fonts, no CDN,
  * no remote url()). The typeface is the system one. Every pair of colour
- * tokens that is painted together is checked for WCAG AA contrast, in
- * light and in dark mode, by tests/Unit/StylesheetContrastTest.php.
+ * tokens that is painted together is checked, in light and in dark mode,
+ * by tests/Unit/Styles/StylesheetContrastTest.php. WCAG AA is required
+ * (4.5:1 for text, also under the hover and pressed filters of .btn; 3:1
+ * for control outlines and the focus ring). WCAG AAA (7:1 for text) is
+ * the target for the default values wherever it does not spoil the look:
+ * today every text pair at rest reaches it.
  *
  * Section 1 is parsed by that test: keep one declaration per line, colours
  * as #rrggbb, and the dark block as `@media (prefers-color-scheme: dark)
@@ -40,31 +44,31 @@
        (WCAG 1.4.11). */
     --yuuu-color-border-strong: #868d98;
     --yuuu-color-text: #1b1f24;
-    --yuuu-color-text-muted: #5b636e;
+    --yuuu-color-text-muted: #4e545e;
 
-    --yuuu-color-success-text: #067647;
+    --yuuu-color-success-text: #05623b;
     --yuuu-color-success-bg: #ecfdf3;
     --yuuu-color-success-border: #abefc6;
     --yuuu-color-warning-text: #93370d;
     --yuuu-color-warning-bg: #fffaeb;
     --yuuu-color-warning-border: #fedf89;
-    --yuuu-color-danger-text: #b42318;
+    --yuuu-color-danger-text: #a11f15;
     --yuuu-color-danger-bg: #fef3f2;
     --yuuu-color-danger-border: #fecdca;
-    --yuuu-color-info-text: #175cd3;
+    --yuuu-color-info-text: #144eb3;
     --yuuu-color-info-bg: #eff8ff;
     --yuuu-color-info-border: #b2ddff;
     --yuuu-color-neutral-text: #404852;
     --yuuu-color-neutral-bg: #f2f4f7;
     --yuuu-color-neutral-border: #d0d5dd;
     /* The solid background of the danger button. */
-    --yuuu-color-danger-solid: #b42318;
+    --yuuu-color-danger-solid: #a11f15;
     --yuuu-color-danger-solid-text: #ffffff;
 
     /* Brand. Neutral defaults, for apps (or companies) without a brand. */
     --yuuu-color-primary: #1b1f24;
     --yuuu-color-primary-text: #ffffff;
-    --yuuu-color-accent: #5b636e;
+    --yuuu-color-accent: #4e545e;
     --yuuu-color-accent-text: #ffffff;
 
     --yuuu-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -110,7 +114,7 @@
         --yuuu-color-neutral-text: #cdd1d7;
         --yuuu-color-neutral-bg: #22262d;
         --yuuu-color-neutral-border: #3a404a;
-        --yuuu-color-danger-solid: #f97066;
+        --yuuu-color-danger-solid: #f9776d;
         --yuuu-color-danger-solid-text: #111111;
 
         --yuuu-color-primary: #e8eaed;

@@ -1,6 +1,6 @@
 {
     "name": "yuuues/yuuu-ui",
-    "description": "Shared base stylesheet of the yuuu suite, shipped as a Symfony bundle: design tokens, dark mode, WCAG AA contrast, no external resources",
+    "description": "Shared base stylesheet of the yuuu suite, shipped as a Symfony bundle: design tokens, dark mode, WCAG AA contrast (AAA targeted), no external resources",
     "type": "symfony-bundle",
     "license": "MIT",
     "minimum-stability": "stable",
