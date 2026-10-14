@@ -1,0 +1,16 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+      - run: composer install --no-interaction --no-progress
+      # One single gate, the same one as locally. With separate steps, CI
+      # and local would be two lists to keep in sync, and the day someone
+      # added a check to bin/verify and not to the workflow, CI would stay
+      # green while validating less than it claims.
+      - run: bin/verify

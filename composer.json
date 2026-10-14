@@ -1,0 +1,32 @@
+{
+    "name": "yuuues/yuuu-ui",
+    "description": "Shared base stylesheet of the yuuu suite, shipped as a Symfony bundle: design tokens, dark mode, WCAG AA contrast, no external resources",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.4",
+        "symfony/config": "8.1.*",
+        "symfony/dependency-injection": "8.1.*",
+        "symfony/http-kernel": "8.1.*",
+        "twig/twig": "^3.21"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^13.0",
+        "symfony/console": "8.1.*",
+        "symfony/filesystem": "8.1.*",
+        "symfony/framework-bundle": "8.1.*",
+        "symfony/twig-bundle": "8.1.*"
+    },
+    "autoload": {
+        "psr-4": { "Yuuues\\YuuuUi\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "Yuuues\\YuuuUi\\Tests\\": "tests/" }
+    },
+    "config": { "sort-packages": true },
+    "extra": { "branch-alias": { "dev-main": "0.1.x-dev" } }
+}
