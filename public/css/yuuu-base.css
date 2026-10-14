@@ -1,0 +1,754 @@
+/*
+ * yuuu-ui: the shared base stylesheet of the yuuu suite.
+ *
+ * NEUTRAL design on purpose. The personality comes from each app through
+ * four brand tokens (--yuuu-color-primary, --yuuu-color-primary-text,
+ * --yuuu-color-accent, --yuuu-color-accent-text), overridden in the app's
+ * own stylesheet linked AFTER this one.
+ *
+ * The brand colour is only used where contrast is guaranteed: the
+ * background of the primary button (with its own text token), and
+ * ornaments (the card stripe). Text, links and focus use the neutral
+ * palette: a dark primary would vanish on the dark background, and a light
+ * one on the light background.
+ *
+ * Status colours (success, warning, danger, info, neutral) are never the
+ * brand's: an error has to look like an error in every app.
+ *
+ * CSP: no inline styles and no external resources (no web fonts, no CDN,
+ * no remote url()). The typeface is the system one. Every pair of colour
+ * tokens that is painted together is checked for WCAG AA contrast, in
+ * light and in dark mode, by tests/Unit/StylesheetContrastTest.php.
+ *
+ * Section 1 is parsed by that test: keep one declaration per line, colours
+ * as #rrggbb, and the dark block as `@media (prefers-color-scheme: dark)
+ * { :root { ... } }`.
+ */
+
+/* ---------------------------------------------------------------------
+ * 1. Tokens
+ * ------------------------------------------------------------------- */
+
+:root {
+    color-scheme: light dark;
+
+    --yuuu-color-bg: #f5f6f8;
+    --yuuu-color-surface: #ffffff;
+    /* Decorative lines: table rows, card edges, separators. */
+    --yuuu-color-border: #dcdfe4;
+    /* The outline of controls: 3:1 against the surface and the page
+       (WCAG 1.4.11). */
+    --yuuu-color-border-strong: #868d98;
+    --yuuu-color-text: #1b1f24;
+    --yuuu-color-text-muted: #5b636e;
+
+    --yuuu-color-success-text: #067647;
+    --yuuu-color-success-bg: #ecfdf3;
+    --yuuu-color-success-border: #abefc6;
+    --yuuu-color-warning-text: #93370d;
+    --yuuu-color-warning-bg: #fffaeb;
+    --yuuu-color-warning-border: #fedf89;
+    --yuuu-color-danger-text: #b42318;
+    --yuuu-color-danger-bg: #fef3f2;
+    --yuuu-color-danger-border: #fecdca;
+    --yuuu-color-info-text: #175cd3;
+    --yuuu-color-info-bg: #eff8ff;
+    --yuuu-color-info-border: #b2ddff;
+    --yuuu-color-neutral-text: #404852;
+    --yuuu-color-neutral-bg: #f2f4f7;
+    --yuuu-color-neutral-border: #d0d5dd;
+    /* The solid background of the danger button. */
+    --yuuu-color-danger-solid: #b42318;
+    --yuuu-color-danger-solid-text: #ffffff;
+
+    /* Brand. Neutral defaults, for apps (or companies) without a brand. */
+    --yuuu-color-primary: #1b1f24;
+    --yuuu-color-primary-text: #ffffff;
+    --yuuu-color-accent: #5b636e;
+    --yuuu-color-accent-text: #ffffff;
+
+    --yuuu-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --yuuu-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+    --yuuu-space-1: 0.25rem;
+    --yuuu-space-2: 0.5rem;
+    --yuuu-space-3: 0.75rem;
+    --yuuu-space-4: 1rem;
+    --yuuu-space-5: 1.5rem;
+    --yuuu-space-6: 2rem;
+    --yuuu-space-7: 3rem;
+
+    --yuuu-radius-1: 6px;
+    --yuuu-radius-2: 12px;
+
+    --yuuu-content-width: 80rem;
+
+    --yuuu-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px rgb(16 24 40 / 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --yuuu-color-bg: #0f1115;
+        --yuuu-color-surface: #171a20;
+        --yuuu-color-border: #2a2f37;
+        --yuuu-color-border-strong: #666e7a;
+        --yuuu-color-text: #e8eaed;
+        --yuuu-color-text-muted: #a0a7b1;
+
+        --yuuu-color-success-text: #75e0a7;
+        --yuuu-color-success-bg: #0b2418;
+        --yuuu-color-success-border: #085d3a;
+        --yuuu-color-warning-text: #fec84b;
+        --yuuu-color-warning-bg: #2a1f0a;
+        --yuuu-color-warning-border: #7a4a0c;
+        --yuuu-color-danger-text: #fda29b;
+        --yuuu-color-danger-bg: #2b1312;
+        --yuuu-color-danger-border: #7a271a;
+        --yuuu-color-info-text: #84caff;
+        --yuuu-color-info-bg: #0b1a2e;
+        --yuuu-color-info-border: #1849a9;
+        --yuuu-color-neutral-text: #cdd1d7;
+        --yuuu-color-neutral-bg: #22262d;
+        --yuuu-color-neutral-border: #3a404a;
+        --yuuu-color-danger-solid: #f97066;
+        --yuuu-color-danger-solid-text: #111111;
+
+        --yuuu-color-primary: #e8eaed;
+        --yuuu-color-primary-text: #111111;
+        --yuuu-color-accent: #a0a7b1;
+        --yuuu-color-accent-text: #111111;
+
+        --yuuu-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * 2. Base elements
+ * ------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Any `display` rule on a class (`.btn`, `.nav`...) would override the
+   browser rule for `[hidden]`, and hidden elements would show. */
+[hidden] {
+    display: none !important;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--yuuu-color-bg);
+    color: var(--yuuu-color-text);
+    font-family: var(--yuuu-font);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+    margin: 0 0 var(--yuuu-space-4);
+    line-height: 1.25;
+    font-weight: 650;
+}
+
+h1 {
+    font-size: 1.5rem;
+}
+
+h2 {
+    font-size: 1.15rem;
+}
+
+h3 {
+    font-size: 1rem;
+}
+
+p,
+ul,
+ol,
+dl {
+    margin: 0 0 var(--yuuu-space-4);
+}
+
+a {
+    color: var(--yuuu-color-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* `:where()` keeps this at the specificity of a bare element, so any
+   class (`.btn`, `.nav__links a`) wins without fighting it. */
+a:where(:hover) {
+    color: var(--yuuu-color-text-muted);
+}
+
+code {
+    font-family: var(--yuuu-font-mono);
+    font-size: 0.9em;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--yuuu-color-border);
+    margin: var(--yuuu-space-5) 0;
+}
+
+/* No `height: auto` on purpose: it would cancel a `height=` attribute. */
+img {
+    max-width: 100%;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--yuuu-space-2) var(--yuuu-space-4);
+}
+
+dt {
+    color: var(--yuuu-color-text-muted);
+}
+
+dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Neutral focus, always visible, on top of any brand colour. */
+:focus-visible {
+    outline: 3px solid var(--yuuu-color-text);
+    outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------
+ * 3. Forms
+ * ------------------------------------------------------------------- */
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--yuuu-space-2);
+    margin: 0 0 var(--yuuu-space-4);
+}
+
+/* A form that sits in a line: actions in a table row, a logout button in
+   the nav, several buttons side by side. */
+form.inline {
+    display: inline-flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0;
+    vertical-align: middle;
+}
+
+label {
+    font-weight: 550;
+    font-size: 0.95rem;
+}
+
+input:not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"], [type="submit"], [type="button"], [type="reset"]),
+select,
+textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: var(--yuuu-space-2) var(--yuuu-space-3);
+    border: 1px solid var(--yuuu-color-border-strong);
+    border-radius: var(--yuuu-radius-1);
+    background: var(--yuuu-color-surface);
+    color: var(--yuuu-color-text);
+    font: inherit;
+}
+
+form.inline input:not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"], [type="submit"], [type="button"], [type="reset"]),
+form.inline select {
+    width: auto;
+}
+
+textarea {
+    min-height: 6rem;
+    resize: vertical;
+}
+
+input[type="file"] {
+    font: inherit;
+    color: var(--yuuu-color-text-muted);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--yuuu-color-text);
+}
+
+input:user-invalid,
+select:user-invalid,
+textarea:user-invalid,
+[aria-invalid="true"] {
+    border-color: var(--yuuu-color-danger-text);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+fieldset {
+    margin: 0;
+    padding: var(--yuuu-space-4);
+    border: 1px solid var(--yuuu-color-border);
+    border-radius: var(--yuuu-radius-1);
+}
+
+/* The error of one field, right below it. */
+.field-error {
+    margin: 0;
+    color: var(--yuuu-color-danger-text);
+    font-size: 0.875rem;
+}
+
+/* ---------------------------------------------------------------------
+ * 4. Buttons. `.btn` works on <button>, <input type="submit"> and <a>.
+ * ------------------------------------------------------------------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--yuuu-space-2);
+    min-height: 2.75rem;
+    padding: var(--yuuu-space-2) var(--yuuu-space-4);
+    border: 0;
+    border-radius: var(--yuuu-radius-1);
+    background: var(--yuuu-color-primary);
+    color: var(--yuuu-color-primary-text);
+    /* Neutral ring: a primary almost identical to the background does not
+       make the button disappear. */
+    box-shadow: inset 0 0 0 1px var(--yuuu-color-border-strong);
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: filter 0.15s ease, background-color 0.15s ease;
+}
+
+.btn:hover {
+    color: var(--yuuu-color-primary-text);
+    filter: brightness(0.92);
+}
+
+.btn:active {
+    filter: brightness(0.85);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.btn--primary {
+    background: var(--yuuu-color-primary);
+    color: var(--yuuu-color-primary-text);
+}
+
+.btn--secondary {
+    background: transparent;
+    color: var(--yuuu-color-text);
+    box-shadow: inset 0 0 0 1px var(--yuuu-color-border-strong);
+}
+
+.btn--secondary:hover {
+    background: var(--yuuu-color-bg);
+    color: var(--yuuu-color-text);
+    filter: none;
+}
+
+/* Our own red, never the brand's. Solid enough against the page that it
+   needs no ring. */
+.btn--danger,
+.btn--danger:hover {
+    background: var(--yuuu-color-danger-solid);
+    color: var(--yuuu-color-danger-solid-text);
+    box-shadow: none;
+}
+
+/* For inline actions in table rows. Still 32 px tall: above the 24 px
+   minimum target of WCAG 2.5.8. */
+.btn--small {
+    min-height: 2rem;
+    padding: var(--yuuu-space-1) var(--yuuu-space-3);
+    font-size: 0.875rem;
+}
+
+.card form .btn {
+    width: 100%;
+}
+
+/* In high-contrast mode the browser removes backgrounds and shadows: the
+   border is what shows it is a button. */
+@media (forced-colors: active) {
+    .btn {
+        border: 1px solid ButtonText;
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * 5. Messages
+ * ------------------------------------------------------------------- */
+
+.flash {
+    margin: 0 0 var(--yuuu-space-4);
+    padding: var(--yuuu-space-3) var(--yuuu-space-4);
+    border: 1px solid var(--yuuu-color-neutral-border);
+    border-radius: var(--yuuu-radius-1);
+    background: var(--yuuu-color-neutral-bg);
+    color: var(--yuuu-color-neutral-text);
+    font-size: 0.95rem;
+}
+
+.flash--success {
+    color: var(--yuuu-color-success-text);
+    background: var(--yuuu-color-success-bg);
+    border-color: var(--yuuu-color-success-border);
+}
+
+.flash--warning {
+    color: var(--yuuu-color-warning-text);
+    background: var(--yuuu-color-warning-bg);
+    border-color: var(--yuuu-color-warning-border);
+}
+
+.flash--error {
+    color: var(--yuuu-color-danger-text);
+    background: var(--yuuu-color-danger-bg);
+    border-color: var(--yuuu-color-danger-border);
+}
+
+.flash--info {
+    color: var(--yuuu-color-info-text);
+    background: var(--yuuu-color-info-bg);
+    border-color: var(--yuuu-color-info-border);
+}
+
+.muted {
+    color: var(--yuuu-color-text-muted);
+}
+
+.empty-state {
+    margin: 0 0 var(--yuuu-space-4);
+    padding: var(--yuuu-space-6) var(--yuuu-space-4);
+    border: 1px dashed var(--yuuu-color-border-strong);
+    border-radius: var(--yuuu-radius-2);
+    color: var(--yuuu-color-text-muted);
+    text-align: center;
+}
+
+.empty-state > :last-child {
+    margin-bottom: 0;
+}
+
+/* Hidden on screen, read by screen readers: the label of a field whose
+   purpose the layout already shows. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * 6. Badges
+ * ------------------------------------------------------------------- */
+
+.badge {
+    display: inline-block;
+    padding: 0.125rem var(--yuuu-space-2);
+    border: 1px solid var(--yuuu-color-neutral-border);
+    border-radius: 999px;
+    background: var(--yuuu-color-neutral-bg);
+    color: var(--yuuu-color-neutral-text);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.badge--neutral {
+    color: var(--yuuu-color-neutral-text);
+    background: var(--yuuu-color-neutral-bg);
+    border-color: var(--yuuu-color-neutral-border);
+}
+
+.badge--success {
+    color: var(--yuuu-color-success-text);
+    background: var(--yuuu-color-success-bg);
+    border-color: var(--yuuu-color-success-border);
+}
+
+.badge--warning {
+    color: var(--yuuu-color-warning-text);
+    background: var(--yuuu-color-warning-bg);
+    border-color: var(--yuuu-color-warning-border);
+}
+
+.badge--danger {
+    color: var(--yuuu-color-danger-text);
+    background: var(--yuuu-color-danger-bg);
+    border-color: var(--yuuu-color-danger-border);
+}
+
+.badge--info {
+    color: var(--yuuu-color-info-text);
+    background: var(--yuuu-color-info-bg);
+    border-color: var(--yuuu-color-info-border);
+}
+
+/* ---------------------------------------------------------------------
+ * 7. Tables
+ * ------------------------------------------------------------------- */
+
+/* Scrolls sideways instead of overflowing the page on narrow screens. */
+.table-wrap {
+    margin: 0 0 var(--yuuu-space-4);
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    margin: 0 0 var(--yuuu-space-4);
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.table-wrap > .table {
+    margin: 0;
+}
+
+.table th,
+.table td {
+    padding: var(--yuuu-space-2) var(--yuuu-space-3);
+    border-bottom: 1px solid var(--yuuu-color-border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.table th {
+    color: var(--yuuu-color-text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* `--surface` and not a mix with `--bg`: a table may sit directly on the
+   page background, and a subtler stripe would be invisible. */
+.table tbody tr:nth-child(even) {
+    background: var(--yuuu-color-surface);
+}
+
+.table td form {
+    margin: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * 8. Layout: top navigation bar
+ * ------------------------------------------------------------------- */
+
+/* Edge to edge, with its content lined up with `.page`. */
+.nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--yuuu-space-2) var(--yuuu-space-5);
+    padding-block: var(--yuuu-space-3);
+    padding-inline: max(var(--yuuu-space-4), calc((100% - var(--yuuu-content-width)) / 2));
+    background: var(--yuuu-color-surface);
+    border-bottom: 1px solid var(--yuuu-color-border);
+}
+
+/* The wordmark or logo slot, usually a link to the home page. */
+.nav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--yuuu-space-2);
+    color: var(--yuuu-color-text);
+    font-weight: 650;
+    font-size: 1.05rem;
+    text-decoration: none;
+}
+
+.nav__brand img,
+.nav__brand svg {
+    display: block;
+    max-height: 2rem;
+    width: auto;
+}
+
+.nav__links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--yuuu-space-1) var(--yuuu-space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.nav__links a {
+    display: inline-block;
+    padding: var(--yuuu-space-1) 0;
+    color: var(--yuuu-color-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.nav__links a:hover,
+.nav__links a[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
+/* Pushed to the right: the signed-in user, a logout form. */
+.nav__end {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--yuuu-space-2) var(--yuuu-space-3);
+    margin-left: auto;
+}
+
+.nav__end form {
+    margin: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * 9. Layout: page content, page header and actions
+ * ------------------------------------------------------------------- */
+
+.page {
+    max-width: var(--yuuu-content-width);
+    margin: 0 auto;
+    padding: var(--yuuu-space-5) var(--yuuu-space-4) var(--yuuu-space-7);
+    overflow-wrap: anywhere;
+}
+
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--yuuu-space-3) var(--yuuu-space-4);
+    margin: 0 0 var(--yuuu-space-5);
+}
+
+/* A detail page may be titled with a long email or identifier. */
+.page-header h1 {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.page-header p {
+    margin: var(--yuuu-space-1) 0 0;
+}
+
+.page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--yuuu-space-2);
+}
+
+.page-actions form {
+    margin: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * 10. Layout: centred card (sign-in, activation, verification, OAuth)
+ * ------------------------------------------------------------------- */
+
+.layout-card {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: var(--yuuu-space-5) var(--yuuu-space-4);
+}
+
+.card {
+    width: 100%;
+    max-width: 26rem;
+    padding: var(--yuuu-space-6) var(--yuuu-space-5);
+    background: var(--yuuu-color-surface);
+    border: 1px solid var(--yuuu-color-border);
+    border-top: 4px solid var(--yuuu-color-accent);
+    border-radius: var(--yuuu-radius-2);
+    box-shadow: var(--yuuu-shadow);
+    overflow-wrap: anywhere;
+}
+
+/* Logo, product name and a welcome line, centred above the form. */
+.card__header {
+    margin: 0 0 var(--yuuu-space-5);
+    text-align: center;
+}
+
+.card__header img,
+.card__header svg {
+    display: block;
+    max-height: 3.5rem;
+    max-width: 12rem;
+    margin: 0 auto var(--yuuu-space-3);
+    object-fit: contain;
+}
+
+.card__header > :last-child {
+    margin-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * 11. Motion
+ * ------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * 12. Narrow screens
+ * ------------------------------------------------------------------- */
+
+@media (max-width: 30rem) {
+    .card {
+        padding: var(--yuuu-space-5) var(--yuuu-space-4);
+    }
+
+    dl {
+        grid-template-columns: 1fr;
+    }
+}
