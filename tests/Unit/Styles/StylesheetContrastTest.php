@@ -43,11 +43,15 @@ final class StylesheetContrastTest extends TestCase
     private const array TEXT_PAIRS = [
         // Body text, links, headings, table cells, field values, the nav,
         // .btn--secondary (transparent: on a card, on the page, and on
-        // the page colour when hovered).
+        // the page colour when hovered). The .modal (text on surface;
+        // the backdrop carries no text), the active .pagination__link and
+        // the current .breadcrumb item (on the page or on a card).
         ['--yuuu-color-text', '--yuuu-color-bg'],
         ['--yuuu-color-text', '--yuuu-color-surface'],
         // .muted, table headers, dt, .empty-state, link hover, the file
-        // input's label.
+        // input's label. .breadcrumb links and separators,
+        // .pagination__current and the dead end of a .pagination (not a
+        // control, but kept readable on purpose).
         ['--yuuu-color-text-muted', '--yuuu-color-bg'],
         ['--yuuu-color-text-muted', '--yuuu-color-surface'],
         // .field-error under a field, on a card or on the page.
@@ -94,7 +98,7 @@ final class StylesheetContrastTest extends TestCase
 
     /** @var list<array{string, string}> foreground, background */
     private const array CONTROL_PAIRS = [
-        // Field borders and the button ring.
+        // Field borders, the button ring, the ring of .pagination__link.
         ['--yuuu-color-border-strong', '--yuuu-color-surface'],
         ['--yuuu-color-border-strong', '--yuuu-color-bg'],
         // The invalid field border.
@@ -103,7 +107,8 @@ final class StylesheetContrastTest extends TestCase
         // The danger button has no ring: its background is its edge.
         ['--yuuu-color-danger-solid', '--yuuu-color-surface'],
         ['--yuuu-color-danger-solid', '--yuuu-color-bg'],
-        // The focus ring.
+        // The focus ring (on a focused .modal itself it is drawn inside
+        // the edge: on the surface, never on the backdrop).
         ['--yuuu-color-text', '--yuuu-color-surface'],
         ['--yuuu-color-text', '--yuuu-color-bg'],
     ];

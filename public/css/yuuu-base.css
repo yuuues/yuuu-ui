@@ -88,6 +88,8 @@
     --yuuu-content-width: 80rem;
 
     --yuuu-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 8px 24px rgb(16 24 40 / 0.08);
+    /* What a modal dialog lays over the page. Not a text background. */
+    --yuuu-backdrop: rgb(16 24 40 / 0.55);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -123,6 +125,7 @@
         --yuuu-color-accent-text: #111111;
 
         --yuuu-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+        --yuuu-backdrop: rgb(0 0 0 / 0.7);
     }
 }
 
@@ -731,7 +734,236 @@ fieldset {
 }
 
 /* ---------------------------------------------------------------------
- * 11. Motion
+ * 11. Dialogs: <dialog class="modal">, opened by yuuu-ui.js
+ * ------------------------------------------------------------------- */
+
+/* No `display` here: it would beat the browser's rule that hides a
+   closed <dialog>. The layout is set on `[open]` only. */
+.modal {
+    width: 32rem;
+    max-width: calc(100% - 2 * var(--yuuu-space-4));
+    max-height: calc(100% - 2 * var(--yuuu-space-4));
+    padding: 0;
+    border: 1px solid var(--yuuu-color-border);
+    border-radius: var(--yuuu-radius-2);
+    background: var(--yuuu-color-surface);
+    color: var(--yuuu-color-text);
+    box-shadow: var(--yuuu-shadow);
+    overflow-wrap: anywhere;
+}
+
+.modal[open] {
+    display: flex;
+    flex-direction: column;
+}
+
+/* In dark mode the surface is almost as dark as the dimmed page (1.17:1):
+   the stronger edge (3.95:1) is what outlines the dialog. */
+@media (prefers-color-scheme: dark) {
+    .modal {
+        border-color: var(--yuuu-color-border-strong);
+    }
+}
+
+/* Older browsers do not let ::backdrop inherit custom properties: they
+   get the light value. */
+.modal::backdrop {
+    background: var(--yuuu-backdrop, rgb(16 24 40 / 0.55));
+}
+
+/* Inside the edge, so the ring stays on the surface colour it is tested
+   against, not on the backdrop. */
+.modal:focus-visible {
+    outline-offset: -3px;
+}
+
+/* A form may wrap the body and the actions: it then takes their layout. */
+.modal > form {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0;
+    min-height: 0;
+    margin: 0;
+}
+
+.modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--yuuu-space-3);
+    padding: var(--yuuu-space-4) var(--yuuu-space-5);
+    border-bottom: 1px solid var(--yuuu-color-border);
+}
+
+.modal__header :is(h1, h2, h3) {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+/* The only part that scrolls when the dialog is taller than the screen. */
+.modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--yuuu-space-5);
+}
+
+.modal__body > :last-child {
+    margin-bottom: 0;
+}
+
+.modal__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--yuuu-space-2);
+    padding: var(--yuuu-space-4) var(--yuuu-space-5);
+    border-top: 1px solid var(--yuuu-color-border);
+}
+
+.modal__actions form {
+    margin: 0;
+}
+
+/* A short question before a destructive action: narrower, no lines. */
+.modal--confirm {
+    width: 26rem;
+}
+
+.modal--confirm .modal__header {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.modal--confirm .modal__actions {
+    padding-top: 0;
+    border-top: 0;
+}
+
+/* ---------------------------------------------------------------------
+ * 12. Navigation aids: breadcrumb, pagination
+ * ------------------------------------------------------------------- */
+
+.breadcrumb {
+    margin: 0 0 var(--yuuu-space-3);
+    font-size: 0.875rem;
+}
+
+.breadcrumb ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* The separator is drawn by CSS, with an empty alternative text where
+   the browser supports it, so screen readers do not read "slash". */
+.breadcrumb li + li::before {
+    content: "/";
+    content: "/" / "";
+    margin: 0 var(--yuuu-space-2);
+    color: var(--yuuu-color-text-muted);
+}
+
+.breadcrumb a {
+    color: var(--yuuu-color-text-muted);
+}
+
+.breadcrumb a:hover {
+    color: var(--yuuu-color-text);
+}
+
+.breadcrumb [aria-current="page"] {
+    color: var(--yuuu-color-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* Previous, "Page 2 of 5", next. The ends keep their place when there
+   is nowhere to go, so the indicator does not jump. */
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--yuuu-space-2) var(--yuuu-space-4);
+    margin: 0 0 var(--yuuu-space-4);
+}
+
+.pagination__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: var(--yuuu-space-2) var(--yuuu-space-4);
+    border-radius: var(--yuuu-radius-1);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.pagination__link[href] {
+    color: var(--yuuu-color-text);
+    box-shadow: inset 0 0 0 1px var(--yuuu-color-border-strong);
+}
+
+.pagination__link[href]:hover {
+    color: var(--yuuu-color-text);
+    text-decoration: underline;
+}
+
+/* An end with nowhere to go: a <span>, not a link. Still readable
+   (muted text is 7:1), with a decorative edge instead of a control's. */
+.pagination__link:not([href]) {
+    color: var(--yuuu-color-text-muted);
+    box-shadow: inset 0 0 0 1px var(--yuuu-color-border);
+    cursor: default;
+}
+
+.pagination__current {
+    color: var(--yuuu-color-text-muted);
+    font-size: 0.95rem;
+}
+
+/* ---------------------------------------------------------------------
+ * 13. Filter bar: search and filters above a table
+ * ------------------------------------------------------------------- */
+
+/* A GET form in a row that wraps. Each field keeps its visible label;
+   the buttons line up with the bottom of the fields. */
+.filter-bar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--yuuu-space-3);
+    margin: 0 0 var(--yuuu-space-4);
+}
+
+.filter-bar__field {
+    display: flex;
+    flex: 1 1 12rem;
+    flex-direction: column;
+    gap: var(--yuuu-space-1);
+    min-width: 0;
+}
+
+/* The search box: twice the room of a select. */
+.filter-bar__field--search {
+    flex: 2 1 16rem;
+}
+
+.filter-bar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--yuuu-space-2);
+}
+
+/* ---------------------------------------------------------------------
+ * 14. Motion
  * ------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
@@ -744,7 +976,7 @@ fieldset {
 }
 
 /* ---------------------------------------------------------------------
- * 12. Narrow screens
+ * 15. Narrow screens
  * ------------------------------------------------------------------- */
 
 @media (max-width: 30rem) {
@@ -754,5 +986,35 @@ fieldset {
 
     dl {
         grid-template-columns: 1fr;
+    }
+
+    /* The dialog becomes a sheet along the bottom edge. */
+    .modal {
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100% - var(--yuuu-space-6));
+        margin: auto 0 0;
+        border-width: 1px 0 0;
+        border-radius: var(--yuuu-radius-2) var(--yuuu-radius-2) 0 0;
+    }
+
+    .modal__header,
+    .modal__body,
+    .modal__actions {
+        padding-inline: var(--yuuu-space-4);
+    }
+
+    .modal__actions {
+        padding-bottom: max(var(--yuuu-space-4), env(safe-area-inset-bottom));
+    }
+
+    .modal__actions > .btn,
+    .filter-bar__actions > .btn {
+        flex: 1 1 auto;
+    }
+
+    .filter-bar__field,
+    .filter-bar__actions {
+        flex-basis: 100%;
     }
 }

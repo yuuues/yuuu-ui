@@ -1,0 +1,52 @@
+{#-
+    yuuu-ui error page: a whole HTML document on the card layout.
+
+    Use it from the app's templates/bundles/TwigBundle/Exception/error.html.twig
+    (and error403/404/500.html.twig) with {% extends '@YuuuUi/error.html.twig' %}.
+    TwigBundle passes `status_code` and `status_text`; rendered by hand, the
+    page defaults to 500.
+
+    The texts below are minimal ENGLISH defaults. An app in another language
+    overrides the blocks (`lang`, `error_title`, `error_code`,
+    `error_message`, `error_action`) with its own translations.
+    `error_title` is reused in <title>: keep it plain text.
+
+    Never shows the exception message: it may carry internal details.
+-#}
+{%- set _code = status_code|default(500) -%}
+{%- set _defaults = {
+    400: ['Bad request', 'The request could not be understood. Please go back and try again.'],
+    403: ['Access denied', 'You do not have permission to see this page.'],
+    404: ['Page not found', 'The page you are looking for does not exist or has moved.'],
+    429: ['Too many requests', 'Please wait a moment and try again.'],
+    503: ['Service unavailable', 'The service is temporarily unavailable. Please try again in a few minutes.'],
+} -%}
+{%- set _text = _defaults[_code] ?? (_code >= 500
+    ? ['Something went wrong', 'An unexpected error occurred. Please try again later.']
+    : [status_text|default('Error'), 'The request could not be completed.']) -%}
+<!DOCTYPE html>
+<html lang="{% block lang %}en{% endblock %}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>{% block title %}{{ block('error_title') }}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ yuuu_ui_stylesheet() }}">
+    {% block stylesheets %}{% endblock %}
+</head>
+<body class="layout-card">
+    <main class="card">
+        <div class="card__header">
+            {% block error_header %}{% endblock %}
+            <h1>{% block error_title %}{{ _text[0] }}{% endblock %}</h1>
+            {% block error_code %}<p class="muted">Error {{ _code }}</p>{% endblock %}
+        </div>
+        {% block error_body %}
+            <p>{% block error_message %}{{ _text[1] }}{% endblock %}</p>
+            {% block error_action %}
+                <p><a class="btn btn--primary" href="/">Go to the home page</a></p>
+            {% endblock %}
+        {% endblock %}
+    </main>
+</body>
+</html>

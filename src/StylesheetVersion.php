@@ -5,30 +5,18 @@ declare(strict_types=1);
 namespace Yuuues\YuuuUi;
 
 /**
- * The short fingerprint of a stylesheet's content, used as `?v=` to bust
- * browser caches on every release that changes the stylesheet, and only
- * on those.
+ * The fingerprint of the stylesheet. Kept so that 0.2 code calling it
+ * keeps working: since 0.3 the same code fingerprints the script too, and
+ * lives in AssetVersion.
  *
- * xxh3 and not a cryptographic hash: nothing here is a secret or a trust
- * decision, it only has to change when the bytes change. Ten hex digits
- * (40 bits) leave a collision between two releases out of the question.
+ * @deprecated since 0.3, use AssetVersion::of()
  */
 final class StylesheetVersion
 {
-    public const int LENGTH = 10;
+    public const int LENGTH = AssetVersion::LENGTH;
 
     public static function of(string $path): string
     {
-        $hash = is_file($path) ? hash_file('xxh3', $path) : false;
-
-        // A failure here happens at container compile time, on the
-        // developer's machine or in the deploy, never on a request. A
-        // missing file means a broken package: better loud than an
-        // unstyled site.
-        if (false === $hash) {
-            throw new \LogicException(\sprintf('yuuu-ui: cannot read the stylesheet at "%s".', $path));
-        }
-
-        return substr($hash, 0, self::LENGTH);
+        return AssetVersion::of($path);
     }
 }

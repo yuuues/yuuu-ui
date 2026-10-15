@@ -6,7 +6,9 @@ The shared base stylesheet of the **yuuu** suite, shipped as a Symfony bundle: y
 - **Neutral** by design. Each app brings its personality through four brand tokens.
 - **WCAG AA required, AAA targeted.** Tested in light *and* dark mode: every text pair reaches 4.5:1 (AA), control outlines 3:1. Every default text pair at rest also reaches **7:1 (AAA)**; see §7.
 - **No external resources**: no web fonts, no CDN, no remote `url()`, no `@import`. Works under CSP `style-src 'self'`, with no inline styles needed.
-- A Twig function, `yuuu_ui_stylesheet()`, that links the file with a content fingerprint for cache busting, computed once when the container is compiled.
+- An optional script, `yuuu-ui.js` (under 3 KiB, no dependencies), that opens forms and confirmations in native `<dialog>` modals. **Progressive enhancement**: without it, links navigate and forms submit, and nothing breaks. Works under CSP `script-src 'self'`.
+- An error page, `@YuuuUi/error.html.twig`, on the card layout, for the app's 403/404/500 pages and a "page expired" case.
+- Two Twig functions, `yuuu_ui_stylesheet()` and `yuuu_ui_script()`, that link the files with a content fingerprint for cache busting, computed once when the container is compiled.
 
 Requires **PHP 8.4** and **Symfony 8.1**.
 
@@ -42,20 +44,21 @@ return [
 ];
 ```
 
-The bundle has no configuration. It needs **TwigBundle** for the Twig function. Without TwigBundle the container still compiles, but the function does not exist.
+The bundle has no configuration. It needs **TwigBundle** for the Twig functions and the error page. Without TwigBundle the container still compiles, but the functions do not exist. TwigBundle registers the bundle's `templates/` directory by itself, under the `@YuuuUi` namespace: nothing to configure.
 
-## 2. Publish the asset
+## 2. Publish the assets
 
-The stylesheet lives inside the package, at `public/css/yuuu-base.css`. `assets:install` copies it to the app's public directory, where the web server can serve it:
+The stylesheet and the script live inside the package, under `public/`. `assets:install` copies them to the app's public directory, where the web server can serve them:
 
 ```bash
 php bin/console assets:install public
 # -> public/bundles/yuuuui/css/yuuu-base.css
+# -> public/bundles/yuuuui/js/yuuu-ui.js
 ```
 
 Symfony Flex runs this automatically after every `composer install` and `composer update`, through the `auto-scripts` of the app's `composer.json`.
 
-> **Deploys that run `composer install --no-scripts` must publish it explicitly.** `--no-scripts` skips `auto-scripts`, so nothing copies the file and the site loads without styles. Add this to the deploy script, after `composer install`:
+> **Deploys that run `composer install --no-scripts` must publish them explicitly.** `--no-scripts` skips `auto-scripts`, so nothing copies the files and the site loads without styles (and without dialogs). Add this to the deploy script, after `composer install`:
 >
 > ```bash
 > php bin/console assets:install public --no-debug
@@ -63,7 +66,7 @@ Symfony Flex runs this automatically after every `composer install` and `compose
 >
 > Use the default **hard copy**. Do not pass `--symlink` or `--relative`: a symlink points into `vendor/`, and a release-based deploy that swaps or prunes `vendor/` leaves it dangling.
 
-Run it on **every deploy**, not only on the first one. The fingerprint in the URL is computed from the file inside `vendor/`. If a new version of the package arrives and the copy in `public/` is not refreshed, the URL changes but browsers download the old file under the new name.
+Run it on **every deploy**, not only on the first one. The fingerprints in the URLs are computed from the files inside `vendor/`. If a new version of the package arrives and the copies in `public/` are not refreshed, the URLs change but browsers download the old files under the new names.
 
 `public/bundles/` is a build artefact: add it to the app's `.gitignore`.
 
@@ -80,6 +83,8 @@ Run it on **every deploy**, not only on the first one. The fingerprint in the UR
     <link rel="stylesheet" href="{{ yuuu_ui_stylesheet() }}">
     {# The app's own layer, always AFTER the base. #}
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    {# Optional: only for the dialogs of §5. `defer`: it runs once the page is parsed. #}
+    <script src="{{ yuuu_ui_script() }}" defer></script>
 </head>
 <body>
     {% block body %}{% endblock %}
@@ -87,10 +92,10 @@ Run it on **every deploy**, not only on the first one. The fingerprint in the UR
 </html>
 ```
 
-`yuuu_ui_stylesheet()` returns `/bundles/yuuuui/css/yuuu-base.css?v=<fingerprint>`, where the fingerprint is the first 10 hex digits of the xxh3 hash of the stylesheet. It:
+`yuuu_ui_stylesheet()` returns `/bundles/yuuuui/css/yuuu-base.css?v=<fingerprint>` and `yuuu_ui_script()` returns `/bundles/yuuuui/js/yuuu-ui.js?v=<fingerprint>`, where each fingerprint is the first 10 hex digits of the xxh3 hash of its own file. Each:
 
 - **changes only when the content changes**, so browsers can cache the file for as long as you like (`Cache-Control: max-age=31536000, immutable` on `/bundles/yuuuui/` is safe as long as every page links it through the function, never by its bare path);
-- **is computed once, when the container is compiled**, not per request. Rendering the function is a string concatenation. In debug mode the stylesheet is a resource of the container, so editing it rebuilds the container and the fingerprint. In production the deploy's `cache:clear` does it;
+- **is computed once, when the container is compiled**, not per request. Rendering the function is a string concatenation. In debug mode both files are resources of the container, so editing one rebuilds the container and its fingerprint. In production the deploy's `cache:clear` does it;
 - is **root-relative**. An app served from a sub-path (`https://example.com/app/`) is not supported yet.
 
 ## 4. The app's own layer
@@ -164,6 +169,7 @@ All tokens are prefixed with `--yuuu-` to avoid collisions with the app's own pr
 | Type | `--yuuu-font` (system UI stack), `--yuuu-font-mono` |
 | Spacing | `--yuuu-space-1` (0.25rem) to `--yuuu-space-7` (3rem): 0.25, 0.5, 0.75, 1, 1.5, 2, 3 rem |
 | Shape | `--yuuu-radius-1` (6px), `--yuuu-radius-2` (12px), `--yuuu-shadow` |
+| Dialogs | `--yuuu-backdrop`: what a `.modal` lays over the page, a translucent colour (no text is painted on it) |
 | Layout | `--yuuu-content-width` (80rem): the max width of `.page` and of the content of `.nav` |
 
 Status colours are **not** meant to be overridden per brand: an error has to look like an error in every app.
@@ -252,6 +258,46 @@ The centred card of the authentication screens (sign-in, activation, verificatio
 </body>
 ```
 
+### Navigation aids
+
+#### `.breadcrumb`
+
+Where the page sits, above its `.page-header`. A `<nav>` with its own label and an ordered list; the separators are drawn by CSS (with an empty alternative text, so screen readers do not read "slash" where the browser supports it). The last item is the current page: mark it `aria-current="page"`. It may be a link to itself or plain text.
+
+```html
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <ol>
+        <li><a href="/">Home</a></li>
+        <li><a href="/customers">Customers</a></li>
+        <li><span aria-current="page">ana@example.com</span></li>
+    </ol>
+</nav>
+```
+
+Links are muted (7:1 on the page and on cards), the current item is in the text colour and bold.
+
+#### `.pagination`, `.pagination__link`, `.pagination__current`
+
+Previous, where you are, next. Links only: no page numbers, no JavaScript. The indicator carries `aria-current="page"`. An end with nowhere to go is **not a link**: a `<span class="pagination__link">` with no `href`, so it cannot be focused or followed, and `aria-hidden="true"`, so screen readers do not announce a "Previous" that goes nowhere (the indicator already says "Page 1 of 5"). It keeps its place, so the indicator does not jump between pages.
+
+```twig
+<nav class="pagination" aria-label="Pagination">
+    {% if page > 1 %}
+        <a class="pagination__link" href="{{ path('customer_index', {page: page - 1}) }}" rel="prev">Previous</a>
+    {% else %}
+        <span class="pagination__link" aria-hidden="true">Previous</span>
+    {% endif %}
+    <span class="pagination__current" aria-current="page">Page {{ page }} of {{ pages }}</span>
+    {% if page < pages %}
+        <a class="pagination__link" href="{{ path('customer_index', {page: page + 1}) }}" rel="next">Next</a>
+    {% else %}
+        <span class="pagination__link" aria-hidden="true">Next</span>
+    {% endif %}
+</nav>
+```
+
+A link (`.pagination__link` with an `href`) has the 3:1 outline of a control and a 2.75rem height; the dead end has a decorative edge and muted text, still 7:1. With more than one pagination on a page, give each `nav` its own `aria-label`. Keep the filters of the list in the URLs (`?q=ana&status=active&page=3`).
+
 ### Tables
 
 #### `.table`, `.table-wrap`
@@ -278,6 +324,36 @@ Data tables: muted headers, a line between rows, zebra rows. No sorting UI. Wrap
     </table>
 </div>
 ```
+
+#### `.filter-bar`, `.filter-bar__field`, `.filter-bar__field--search`, `.filter-bar__actions`
+
+Search and filters above a table: a GET form laid out in a row that wraps. Each `.filter-bar__field` is a label above its control and takes at least 12rem; `.filter-bar__field--search` takes twice the room of the others. `.filter-bar__actions` holds the buttons, lined up with the bottom of the fields. On narrow screens (30rem and below) every field and the actions take the full width, and the buttons share it.
+
+```html
+<form class="filter-bar" method="get" action="/customers" role="search" aria-label="Customers">
+    <div class="filter-bar__field filter-bar__field--search">
+        <label for="filter-q">Search</label>
+        <input id="filter-q" name="q" type="search" value="ana">
+    </div>
+    <div class="filter-bar__field">
+        <label for="filter-status">Status</label>
+        <select id="filter-status" name="status">
+            <option value="">Any</option>
+            <option value="active" selected>Active</option>
+            <option value="blocked">Blocked</option>
+        </select>
+    </div>
+    <div class="filter-bar__actions">
+        <button class="btn btn--secondary">Filter</button>
+        <a class="btn btn--secondary" href="/customers">Clear</a>
+    </div>
+</form>
+<div class="table-wrap">
+    <table class="table">...</table>
+</div>
+```
+
+Keep the labels visible: a filter whose purpose is only in a placeholder is lost as soon as it has a value. GET, so the filtered list has a URL that can be shared and reloaded, and `.pagination` links can carry the filters.
 
 ### Badges
 
@@ -397,6 +473,93 @@ Hidden on screen, read by screen readers: the label of a search box whose purpos
 <label class="visually-hidden" for="q">Search</label>
 ```
 
+### Dialogs
+
+Native `<dialog>` elements, opened as modals by `yuuu-ui.js` (load it as in §3). The browser does the hard parts: the rest of the page becomes inert, focus moves into the dialog and stays there, Escape closes it.
+
+#### The contract: progressive enhancement
+
+Every dialog **replaces something that already works without JavaScript**:
+
+- a **form modal** replaces a link to a full page: `<a href="/companies/new" data-modal-open="new-company">`. Without the script, or in a browser without `HTMLDialogElement.prototype.showModal`, the link navigates to `/companies/new`, which renders the same form as a page;
+- a **confirm dialog** stands between a destructive button and its form: `<button data-confirm="confirm-block">`. Without the script, the form submits directly, with no confirmation.
+
+So the server must not depend on the dialog:
+
+- The form inside a form modal posts to **the same action** as the full page. When validation fails, the server renders the full page with the errors (the dialog is not reopened); on success it redirects as usual.
+- A destructive action is a **POST** (never a link), protected by a CSRF token, and **safe to receive without a confirmation**: idempotent (blocking a blocked user, or deleting a deleted record, is a no-op or a 404, never an error page or a second effect) and, where the harm would be serious, reversible (archive or soft-delete, an "undo" flash) or confirmed on a page of its own. The dialog is a convenience against misclicks, not a safeguard.
+
+The attributes the script reacts to:
+
+| Attribute | On | With the script | Without it |
+|---|---|---|---|
+| `data-modal-open="id"` | a link (or a button) | Opens `<dialog id="id">` with `showModal()` instead of following the link. Ctrl/Cmd/Shift/Alt-clicks and middle clicks keep their browser meaning (new tab...). | The link navigates. |
+| `data-modal-close` | any element inside a dialog | Closes the dialog. | On a link, it navigates (a "Cancel" link back to the list); on a `type="button"`, nothing. |
+| `data-confirm="id"` | a submit button of a form | Opens the confirm dialog `id` instead of submitting. | The form submits. |
+| `data-modal-confirm` | a button inside the confirm dialog | Closes the dialog and submits the original form with `form.requestSubmit(button)`: the original button is the submitter, so its `name`/`value` and `formaction` are sent, and the form's `submit` event and validation run as on a direct click. | Never shown. |
+
+Also, for every dialog opened by the script: a click on the **backdrop** closes it (only for `class="modal"`), and on close, by any means, **focus returns to the trigger**. If the dialog `id` does not exist, the trigger behaves as without the script. Browsers with `<dialog>` but without `requestSubmit()` (Safari before 16) get no confirm dialog: the form submits directly.
+
+#### `.modal`, `.modal__header`, `.modal__body`, `.modal__actions`
+
+A dialog on a card surface, 32rem wide at most, over a dimmed page (`--yuuu-backdrop`). The header holds the title and a close button, the body scrolls when the dialog is taller than the screen, the actions sit at the bottom, aligned right. On narrow screens (30rem and below) it becomes a **sheet** along the bottom edge, full width, with the buttons sharing the row. In dark mode its edge uses `--yuuu-color-border-strong`: the dark surface alone barely stands out from the dimmed page.
+
+A `<form>` that is a direct child of the dialog takes the layout, so it can wrap the body and the actions:
+
+```html
+<a class="btn btn--primary" href="/companies/new" data-modal-open="new-company">New company</a>
+
+<dialog class="modal" id="new-company" aria-labelledby="new-company-title">
+    <form method="post" action="/companies/new">
+        <div class="modal__header">
+            <h2 id="new-company-title">New company</h2>
+            <button type="button" class="btn btn--secondary btn--small" data-modal-close>Close</button>
+        </div>
+        <div class="modal__body">
+            <label for="new-company-name">Name</label>
+            <input id="new-company-name" name="name" required autofocus>
+        </div>
+        <div class="modal__actions">
+            <button type="button" class="btn btn--secondary" data-modal-close>Cancel</button>
+            <button class="btn btn--primary">Create</button>
+        </div>
+    </form>
+</dialog>
+```
+
+- Use `<div>`s for the parts, not `<header>`/`<footer>`: inside a `<dialog>` those would be announced as the page's banner and content info.
+- Name the dialog with `aria-labelledby` pointing at its title.
+- Put `autofocus` on the first field; otherwise the browser focuses the first focusable element (here, the Close button).
+- Buttons that only close are `type="button"`: a bare `<button>` inside the form would submit it.
+- Render the form with the same Twig partial as the full page, with its own `id`s: the dialog is in the page even while closed, and two fields with the same `id` break their labels.
+
+#### `.modal--confirm`
+
+The confirmation before a destructive action: narrower (26rem), no lines between the parts. Give it `role="alertdialog"`, a title and a description, and put `autofocus` on **Cancel**, so a stray Enter does not confirm:
+
+```html
+<form class="inline" method="post" action="/users/1/block">
+    <input type="hidden" name="_token" value="...">
+    <button class="btn btn--danger btn--small" data-confirm="confirm-block">Block</button>
+</form>
+
+<dialog class="modal modal--confirm" id="confirm-block" role="alertdialog"
+        aria-labelledby="confirm-block-title" aria-describedby="confirm-block-text">
+    <div class="modal__header">
+        <h2 id="confirm-block-title">Block this user?</h2>
+    </div>
+    <div class="modal__body">
+        <p id="confirm-block-text">They are signed out everywhere and cannot sign in until unblocked.</p>
+    </div>
+    <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" data-modal-close autofocus>Cancel</button>
+        <button type="button" class="btn btn--danger" data-modal-confirm>Block</button>
+    </div>
+</dialog>
+```
+
+One confirm dialog can serve every row of a table: the script remembers which button opened it and submits that button's form. Use one dialog per row only when the question names the row ("Block ana@example.com?"). Keep the confirm dialog **outside** the form it confirms.
+
 ## 6. Dark mode
 
 Automatic, from the operating system's preference (`prefers-color-scheme: dark`). Every colour token has a dark value, and `color-scheme: light dark` makes the browser draw native widgets (checkboxes, scrollbars, date pickers) in the matching scheme. There is no manual toggle yet.
@@ -463,30 +626,112 @@ Not tested, on purpose:
 - **Placeholders**: the base does not style `::placeholder`, so the browser's default applies, which is usually below 7:1. Use a `<label>` for anything the user must read, never only a placeholder.
 - **`.muted` inside a flash or a badge**: `.muted` is tested on the page and on cards. On the tinted backgrounds of flashes it ranges from 6.26:1 to 7.31:1 (AA, not always AAA).
 - The `.card` accent stripe: an ornament, it carries no information.
+- **The edge of a `.modal` against the dimmed page.** A dialog's outline is not a control and WCAG 1.4.11 does not ask for 3:1, but it must still be visible. For the record, with the default backdrop: in light mode the white surface against the dimmed page is 4.19:1; in dark mode the surface alone would be 1.17:1, so the dialog takes the `border-strong` edge there, 3.95:1 against the dimmed page.
 
-Also: a visible focus ring everywhere (`:focus-visible`), button borders in forced-colours (Windows high contrast) mode, no transitions under `prefers-reduced-motion`, 44px controls (32px for `.btn--small`).
+**The components of 0.3 add no new colour pair.** The dialogs, the breadcrumb, the pagination and the filter bar paint pairs already in the tables above: `text` on `surface` inside a `.modal`; `text` and `text-muted` on `bg` or `surface` for the breadcrumb, the pagination indicator and its dead ends; `border-strong` on `bg` or `surface` for the ring of a `.pagination__link`; the focus ring on `surface` inside dialogs (on a focused `.modal` itself the ring is drawn inside its edge, so it never falls on the backdrop). The backdrop carries no text.
+
+Also: a visible focus ring everywhere (`:focus-visible`), button borders in forced-colours (Windows high contrast) mode, no transitions under `prefers-reduced-motion`, 44px controls (32px for `.btn--small`; `.pagination__link` is 44px too). Dialogs are native `<dialog>` modals: focus is moved in and kept in by the browser, the page behind is inert, Escape closes, and the script returns focus to the trigger.
 
 ## 8. Content Security Policy
 
-The stylesheet loads nothing: no fonts, no images, no `@import`. `tests/Unit/Styles/StylesheetHygieneTest.php` fails the build if a remote `url()`, an `@import` or an `@font-face` appears, or if `!important` shows up anywhere other than `[hidden]` and the reduced-motion reset. An app using only the base needs:
+The stylesheet loads nothing: no fonts, no images, no `@import`. `tests/Unit/Styles/StylesheetHygieneTest.php` fails the build if a remote `url()`, an `@import` or an `@font-face` appears, or if `!important` shows up anywhere other than `[hidden]` and the reduced-motion reset.
+
+The script loads nothing either, and needs nothing relaxed: it is a file from the app's own origin (no inline `<script>`), attaches its listeners with `addEventListener` (no `onclick=` attributes), never evaluates strings (no `'unsafe-eval'`), never parses HTML and never writes a `style`. `tests/Unit/Scripts/ScriptHygieneTest.php` fails the build if `eval`, `new Function`, `innerHTML` and friends, `.style`, an `on*` handler, a URL, a network call or a global appears, or if the file grows past 3 KiB.
+
+An app using the base and the script needs:
 
 ```
-style-src 'self'
+style-src 'self'; script-src 'self'
 ```
 
 No `'unsafe-inline'`, and no `style=` attributes in templates: the classes cover the layout. An app that injects per-request token values (as yuuuID does with each company's colours) needs a nonce on that `<style>` element.
 
-## 9. Versioning
+With a **nonce-based** policy that uses `'strict-dynamic'`, browsers ignore `'self'` for scripts: give the script tag the nonce too (`<script src="{{ yuuu_ui_script() }}" nonce="..." defer>`).
+
+## 9. Error pages
+
+`@YuuuUi/error.html.twig` is a whole HTML document on the card layout (`.layout-card`, `.card`): a title, the status code, a message and a button back to the home page. It links the base stylesheet itself and loads no script.
+
+It is a complete page on purpose, not a block of the app's `base.html.twig`: an error page must still render when what failed is the app's layout (a menu that queries the database, a missing user).
+
+### Use it for the app's error pages
+
+Symfony renders `templates/bundles/TwigBundle/Exception/error<code>.html.twig`, falling back to `error.html.twig`, **when debug is off** (in production; in development you get the exception page instead). One file is enough, because the bundle's page picks its texts from the status code:
+
+```twig
+{# templates/bundles/TwigBundle/Exception/error.html.twig #}
+{% extends '@YuuuUi/error.html.twig' %}
+
+{% block stylesheets %}<link rel="stylesheet" href="{{ asset('css/app.css') }}">{% endblock %}
+{% block error_header %}<img src="{{ asset('img/logo.svg') }}" alt="yuuu CRM" height="56">{% endblock %}
+```
+
+Add `error403.html.twig`, `error404.html.twig` or `error500.html.twig` next to it, extending the same page, only for the codes that need their own text or action. To see them in development, import the error routes (`config/routes/framework.yaml`, `when@dev: _errors: { resource: '@FrameworkBundle/Resources/config/routing/errors.php', prefix: /_error }`) and open `/_error/404`.
+
+### The texts: English defaults, replaced by blocks
+
+The bundle ships no translations. It has **minimal English defaults**, so that an app that only extends the page gets a correct error page from day one, and every text sits in a block, so an app in another language replaces them with its own translations:
+
+| Block | Default |
+|---|---|
+| `lang` | `en`: change it together with the texts |
+| `title` | The `<title>`: the content of `error_title` |
+| `error_header` | Empty: the logo slot, above the title |
+| `error_title` | By code: 400 "Bad request", 403 "Access denied", 404 "Page not found", 429 "Too many requests", 503 "Service unavailable", any other 5xx "Something went wrong", any other 4xx the status text ("Gone"). Plain text: it is reused in `<title>` |
+| `error_code` | `<p class="muted">Error 404</p>`; empty it to hide the code |
+| `error_message` | One sentence per code, as above |
+| `error_action` | `<p><a class="btn btn--primary" href="/">Go to the home page</a></p>` |
+| `error_body` | The message and the action together |
+| `stylesheets` | Empty: the app's own stylesheet, linked after the base |
+
+```twig
+{# templates/bundles/TwigBundle/Exception/error.html.twig, a Spanish app #}
+{% extends '@YuuuUi/error.html.twig' %}
+
+{% block lang %}es{% endblock %}
+{% block error_title %}{{ ('error.' ~ status_code ~ '.title')|trans }}{% endblock %}
+{% block error_code %}<p class="muted">{{ 'error.code'|trans({'%code%': status_code}) }}</p>{% endblock %}
+{% block error_message %}{{ ('error.' ~ status_code ~ '.message')|trans }}{% endblock %}
+{% block error_action %}<p><a class="btn btn--primary" href="{{ path('app_home') }}">{{ 'error.home'|trans }}</a></p>{% endblock %}
+```
+
+Rendered by hand (without `status_code`), the page defaults to 500. It **never shows the exception message**, which may carry internal details.
+
+### "Page expired": a stale CSRF token
+
+A form with a CSRF token that sits open too long (or across a deploy that rotated the secret) fails its token check. A Symfony **form** already handles this: it re-renders with a "The CSRF token is invalid" error. The case left is the bare POST button (block, delete, sign out) that has no form to re-render. Do not show it as a generic 403 page: tell the user what happened and how to retry.
+
+```twig
+{# templates/page_expired.html.twig #}
+{% extends '@YuuuUi/error.html.twig' %}
+
+{% block error_title %}This page has expired{% endblock %}
+{% block error_code %}{% endblock %}
+{% block error_message %}For your security, forms expire after a while. Go back, reload the page and try again.{% endblock %}
+{% block error_action %}<p><a class="btn btn--primary" href="{{ back_url }}">Back</a></p>{% endblock %}
+```
+
+```php
+if (!$this->isCsrfTokenValid('block-user', $request->getPayload()->getString('_token'))) {
+    return $this->render('page_expired.html.twig', [
+        'back_url' => $this->generateUrl('user_show', ['id' => $user->getId()]),
+    ], new Response(status: Response::HTTP_FORBIDDEN));
+}
+```
+
+Link back to a URL the app builds, not to the `Referer` header. The status is **403**: there is no standard "expired" code (419 is a Laravel convention), and the request was refused.
+
+## 10. Versioning
 
 [Semantic versioning](https://semver.org/), with git tags `vX.Y.Z`. Before 1.0, a **minor** version (0.1 → 0.2) may break: renaming or removing a class or token, or changing what a class looks like in a way a layout depends on. A **patch** (0.1.0 → 0.1.1) only fixes, without renaming anything. Require it with a caret:
 
 ```json
-"yuuues/yuuu-ui": "^0.2"
+"yuuues/yuuu-ui": "^0.3"
 ```
 
-Every class and token documented here is public API. Everything else in the file is not.
+Every class and token documented here is public API, and so are the two Twig functions, the `data-` attributes of the script and the blocks of the error page. Everything else in the files is not.
 
-## 10. Development
+## 11. Development
 
 ```bash
 docker run --rm -v "$PWD":/app -w /app darkkyto/yuuu-app-ci-php:8.4-1 composer install
@@ -495,4 +740,6 @@ docker run --rm -v "$PWD":/app -w /app darkkyto/yuuu-app-ci-php:8.4-1 bin/verify
 
 On Git Bash for Windows, prefix both with `MSYS_NO_PATHCONV=1`.
 
-`bin/verify` is the single gate, the same one CI runs: php-cs-fixer, PHPStan level 8, and PHPUnit (unit and functional suites). A new class in the stylesheet needs its entry in §5, or the suite fails. A new colour pair needs its line in `StylesheetContrastTest`.
+`bin/verify` is the single gate, the same one CI runs: php-cs-fixer, PHPStan level 8, and PHPUnit (unit and functional suites). A new class in the stylesheet needs its entry in §5, or the suite fails. A new colour pair needs its line in `StylesheetContrastTest`. A new `data-` attribute in the script needs its line in the table of *Dialogs*, and the script must stay under 3 KiB.
+
+PHPUnit cannot click a dialog: the script's behaviour is checked by hand in a browser (open from a link, Escape, backdrop, Cancel, confirm submits the original form with its button, focus back on the trigger, and nothing intercepted without the script). `ScriptHygieneTest` guards what can be read from the source.
