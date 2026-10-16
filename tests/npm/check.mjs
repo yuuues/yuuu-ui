@@ -5,7 +5,7 @@
 //
 // Exits non-zero with every failure listed.
 
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, realpathSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -40,7 +40,8 @@ async function build() {
 
     // Node's resolver honours "exports": the two public subpaths resolve,
     // a path into the package does not.
-    const installed = fileURLToPath(new URL('./node_modules/@yuuues/yuuu-ui/', import.meta.url));
+    // realpath: pnpm links the package from its store.
+    const installed = realpathSync(fileURLToPath(new URL('./node_modules/@yuuues/yuuu-ui/', import.meta.url)));
     for (const [subpath, file] of [['tokens.css', 'public/css/tokens.css'], ['base.css', 'public/css/yuuu-base.css']]) {
         const resolved = fileURLToPath(import.meta.resolve(`@yuuues/yuuu-ui/${subpath}`));
         check(resolved === join(installed, file), `exports: ${subpath} resolved to ${resolved}`);

@@ -779,7 +779,7 @@ npm i github:yuuues/yuuu-ui#v0.4.0
 pnpm add github:yuuues/yuuu-ui#v0.4.0
 ```
 
-`package.json` gets `"@yuuues/yuuu-ui": "github:yuuues/yuuu-ui#v0.4.0"` and the lockfile pins the commit. The package ships two CSS files and nothing else, and **nothing runs on install**: the CSS is committed, built, so it works with `ignore-scripts=true`. npm needs `git` on the machine to resolve the tag; pnpm does not.
+`package.json` gets `"@yuuues/yuuu-ui": "github:yuuues/yuuu-ui#v0.4.0"` and the lockfile pins the commit. The package ships the two CSS files (plus its README, LICENSE and `package.json`), and **nothing runs on install**: the CSS is committed, built, so it works with `ignore-scripts=true`. Both npm and pnpm need **`git`** on the machine to resolve the tag; slim images such as `node:22-alpine` lack it (`apk add git`).
 
 The package is `private`: it is never published to a registry, the git tag is the release.
 
