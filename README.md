@@ -2,19 +2,22 @@
 
 The shared base stylesheet of the **yuuu** suite, shipped as a Symfony bundle: yuuuID's screens and operator panel, the yuuu CRM back-office, and every new app started from the skeleton look the same and stay accessible without copying CSS around.
 
-- One file, `yuuu-base.css`: design tokens as CSS custom properties, a small set of BEM-light classes, automatic dark mode.
+- One file, `yuuu-base.css`: design tokens as CSS custom properties, a small set of BEM-light classes, automatic dark mode. The tokens alone, `tokens.css`, are generated from it for apps that bring their own rules.
 - **Neutral** by design. Each app brings its personality through four brand tokens.
 - **WCAG AA required, AAA targeted.** Tested in light *and* dark mode: every text pair reaches 4.5:1 (AA), control outlines 3:1. Every default text pair at rest also reaches **7:1 (AAA)**; see §7.
 - **No external resources**: no web fonts, no CDN, no remote `url()`, no `@import`. Works under CSP `style-src 'self'`, with no inline styles needed.
 - An optional script, `yuuu-ui.js` (under 3 KiB, no dependencies), that opens forms and confirmations in native `<dialog>` modals. **Progressive enhancement**: without it, links navigate and forms submit, and nothing breaks. Works under CSP `script-src 'self'`.
 - An error page, `@YuuuUi/error.html.twig`, on the card layout, for the app's 403/404/500 pages and a "page expired" case.
 - Two Twig functions, `yuuu_ui_stylesheet()` and `yuuu_ui_script()`, that link the files with a content fingerprint for cache busting, computed once when the container is compiled.
+- An npm package, `@yuuues/yuuu-ui`, installed from a git tag (no registry), so JavaScript apps built with Vite can **import** the CSS, inlined into a single HTML file if they need to; see §12.
 
-Requires **PHP 8.4** and **Symfony 8.1**.
+The bundle requires **PHP 8.4** and **Symfony 8.1**. JavaScript apps need neither (§12).
 
 ---
 
 ## 1. Install
+
+This section and the next four are for Symfony apps. A JavaScript app (Vite, Preact...) goes straight to §12.
 
 The package is not on Packagist yet. Until it is, add the repository to the app's `composer.json` (it is public, no credentials needed):
 
@@ -726,8 +729,10 @@ Link back to a URL the app builds, not to the `Referer` header. The status is **
 [Semantic versioning](https://semver.org/), with git tags `vX.Y.Z`. Before 1.0, a **minor** version (0.1 → 0.2) may break: renaming or removing a class or token, or changing what a class looks like in a way a layout depends on. A **patch** (0.1.0 → 0.1.1) only fixes, without renaming anything. Require it with a caret:
 
 ```json
-"yuuues/yuuu-ui": "^0.3"
+"yuuues/yuuu-ui": "^0.4"
 ```
+
+JavaScript apps pin an exact git tag instead (§12). A release bumps the version in `package.json`, the `branch-alias` of `composer.json` and the install command of §12 together: `PackageJsonTest` fails while they disagree.
 
 Every class and token documented here is public API, and so are the two Twig functions, the `data-` attributes of the script and the blocks of the error page. Everything else in the files is not.
 
@@ -740,6 +745,113 @@ docker run --rm -v "$PWD":/app -w /app darkkyto/yuuu-app-ci-php:8.4-1 bin/verify
 
 On Git Bash for Windows, prefix both with `MSYS_NO_PATHCONV=1`.
 
-`bin/verify` is the single gate, the same one CI runs: php-cs-fixer, PHPStan level 8, and PHPUnit (unit and functional suites). A new class in the stylesheet needs its entry in §5, or the suite fails. A new colour pair needs its line in `StylesheetContrastTest`. A new `data-` attribute in the script needs its line in the table of *Dialogs*, and the script must stay under 3 KiB.
+`bin/verify` is the gate of the bundle, the same one CI runs: php-cs-fixer, PHPStan level 8, and PHPUnit (unit and functional suites). A new class in the stylesheet needs its entry in §5, or the suite fails. A new colour pair needs its line in `StylesheetContrastTest`. A new `data-` attribute in the script needs its line in the table of *Dialogs*, and the script must stay under 3 KiB.
 
 PHPUnit cannot click a dialog: the script's behaviour is checked by hand in a browser (open from a link, Escape, backdrop, Cancel, confirm submits the original form with its button, focus back on the trigger, and nothing intercepted without the script). `ScriptHygieneTest` guards what can be read from the source.
+
+**`tokens.css` is generated, never edited.** Section 1 of `yuuu-base.css` is the one source of truth; after changing a token, regenerate the copy and commit both files:
+
+```bash
+docker run --rm -v "$PWD":/app -w /app darkkyto/yuuu-app-ci-php:8.4-1 php bin/build-tokens
+```
+
+`TokensStylesheetTest` fails while the committed `tokens.css` differs from what the script would write, and checks that it carries the same colours the contrast test checks, and nothing but tokens.
+
+**The npm side has its own gate**, `bin/verify-package`, the one the `package` job of CI runs. It needs Node 22 and the npm registry, so it runs in a Node image:
+
+```bash
+docker run --rm -v "$PWD":/app -w /app node:22-alpine sh bin/verify-package
+```
+
+It checks the exact list of files `npm pack` ships, then copies `tests/npm` (a throwaway Vite + Preact app with a locked set of dependencies) to a temporary directory, installs the packed tarball into it with scripts off, and builds two single-file pages, one importing `tokens.css` and one `base.css`. It fails if the two subpaths do not resolve through `exports` (or a path outside them does), if either CSS file does not parse strictly (lightningcss), if a page is not one self-contained HTML file (a `src=`, an `href=`, a `<link>`, an `@import`, a `url()`, a `fetch()` or a dynamic `import()`), if the light or dark tokens are missing from it, or if the app's brand override does not come after the defaults. The working tree is never touched.
+
+## 12. Using yuuu-ui from a JavaScript app (Vite/Preact)
+
+The same CSS, imported instead of linked: Vite bundles it with the app, and a single-file build inlines it into the HTML. Nothing PHP is involved.
+
+### Install
+
+From the git tag, with no registry and no credentials (the repository is public):
+
+```bash
+npm i github:yuuues/yuuu-ui#v0.4.0
+# or
+pnpm add github:yuuues/yuuu-ui#v0.4.0
+```
+
+`package.json` gets `"@yuuues/yuuu-ui": "github:yuuues/yuuu-ui#v0.4.0"` and the lockfile pins the commit. The package ships two CSS files and nothing else, and **nothing runs on install**: the CSS is committed, built, so it works with `ignore-scripts=true`. npm needs `git` on the machine to resolve the tag; pnpm does not.
+
+The package is `private`: it is never published to a registry, the git tag is the release.
+
+### Import
+
+```js
+// main.jsx
+import '@yuuues/yuuu-ui/tokens.css'; // the tokens only
+// or
+import '@yuuues/yuuu-ui/base.css';   // the whole base: the tokens and the classes of §5
+
+import './app.css';                  // the app's own layer, ALWAYS after
+```
+
+| Import | File | What it brings |
+|---|---|---|
+| `@yuuues/yuuu-ui/tokens.css` | `public/css/tokens.css` | Every `--yuuu-*` custom property of §4, with its dark value, and `color-scheme: light dark`. Styles no element. |
+| `@yuuues/yuuu-ui/base.css` | `public/css/yuuu-base.css` | Exactly what Twig apps link: the tokens plus the base elements and the classes of §5. |
+
+Import **one** of the two: `base.css` already contains `tokens.css`. Take `tokens.css` when the app writes its own components and only wants the palette, dark mode, type and spacing to match the suite; take `base.css` to use the classes (`.btn`, `.card`, `.table`...). Only these two subpaths are public: `exports` refuses `@yuuues/yuuu-ui/public/css/...`.
+
+`yuuu-ui.js` is not part of the package: it wires `data-` attributes for server-rendered pages, and in a Preact app the component owns its dialogs (`ref.current.showModal()`). The `.modal` classes of `base.css` work on any `<dialog>`.
+
+### Single-file builds
+
+With [`vite-plugin-singlefile`](https://github.com/richardtallent/vite-plugin-singlefile), the imported CSS lands in an inline `<style>` of the one HTML file: no `<link>`, nothing fetched. yuuu-ui itself loads nothing (no fonts, no `url()`, no `@import`, §8), so the page works offline.
+
+```js
+// vite.config.js
+import { defineConfig } from 'vite';
+import { viteSingleFile } from 'vite-plugin-singlefile';
+
+export default defineConfig({
+    plugins: [/* the app's own plugins (Preact...), */ viteSingleFile()],
+    build: {
+        // Vite's modulepreload polyfill contains a fetch(). A single file
+        // has nothing to preload: leave it out, so a review of the page
+        // finds no network call at all.
+        modulePreload: { polyfill: false },
+    },
+});
+```
+
+`bin/verify-package` builds exactly this, from the packed tarball, on every CI run (§11). A single-file page served under a CSP needs hashes for its inline `<style>` and `<script>`: `'self'` does not cover inline code.
+
+### The app's brand
+
+Exactly as in §4, in the app's own CSS **imported after** yuuu-ui (Vite keeps the import order, so the later `:root` rule wins, in both colour schemes):
+
+```css
+/* src/app.css */
+:root {
+    --yuuu-color-primary: #4055ff;
+    --yuuu-color-primary-text: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --yuuu-color-primary: #8c99ff;
+        --yuuu-color-primary-text: #111111;
+    }
+}
+```
+
+The app answers for the contrast of its own pair (§4, *Brand tokens*). Status colours are not meant to be overridden: an error has to look like an error in every app.
+
+### Updating
+
+**Apps never edit yuuu-ui**: not the files in `node_modules`, not a copy pasted into the app, not a fork. A change to a token or a class is made here, tested by the gates of §11 and released as a new tag; the app then moves to it on purpose:
+
+```bash
+npm i github:yuuues/yuuu-ui#vX.Y.Z
+```
+
+and commits `package.json` and the lockfile. Before 1.0 a minor version may break (§10): read the release notes. What only one app needs belongs in that app's own CSS, with its own class prefix.

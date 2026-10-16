@@ -14,3 +14,14 @@ jobs:
       # added a check to bin/verify and not to the workflow, CI would stay
       # green while validating less than it claims.
       - run: bin/verify
+
+  # The npm side, with the same rule: one script, the same one as locally
+  # (in node:22-alpine). It needs Node, which the PHP gate does not have.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: sh bin/verify-package

@@ -28,5 +28,5 @@
         "psr-4": { "Yuuues\\YuuuUi\\Tests\\": "tests/" }
     },
     "config": { "sort-packages": true },
-    "extra": { "branch-alias": { "dev-main": "0.3.x-dev" } }
+    "extra": { "branch-alias": { "dev-main": "0.4.x-dev" } }
 }
