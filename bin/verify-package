@@ -1,0 +1,28 @@
+#!/bin/sh
+# The npm side of the package, the gate CI runs in its "package" job:
+# what `npm pack` ships, and a throwaway Vite + Preact app (tests/npm)
+# that installs the packed tarball and builds two single-file pages with
+# it. Scripts stay off, as on the owner's machines (ignore-scripts=true).
+#
+# Needs Node 22+ and the npm registry (for the fixture's dependencies).
+# Works on a copy in a temporary directory: the tree stays clean.
+set -e
+root=$(cd "$(dirname "$0")/.." && pwd)
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+echo "== npm pack =="
+cd "$root"
+npm pack --json --ignore-scripts --pack-destination "$work" > "$work/pack.json"
+node tests/npm/check.mjs pack "$work/pack.json"
+
+echo "== consumer app =="
+cp -R tests/npm "$work/app"
+rm -rf "$work/app/node_modules" "$work/app/dist"
+cd "$work/app"
+npm ci --ignore-scripts --no-audit --no-fund --loglevel=error
+npm install --no-save --ignore-scripts --no-audit --no-fund --loglevel=error "$work"/yuuues-yuuu-ui-*.tgz
+ENTRY=tokens npx --no-install vite build
+ENTRY=base npx --no-install vite build
+node check.mjs build
+echo "== OK =="

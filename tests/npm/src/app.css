@@ -1,0 +1,11 @@
+/* The app's own layer: a brand override, imported AFTER yuuu-ui. */
+:root {
+    --yuuu-color-primary: #0b5cad;
+    --yuuu-color-primary-text: #ffffff;
+}
+
+.check-panel {
+    padding: var(--yuuu-space-4);
+    background: var(--yuuu-color-surface);
+    color: var(--yuuu-color-text);
+}

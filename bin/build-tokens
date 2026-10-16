@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Regenerates public/css/tokens.css from section 1 of yuuu-base.css.
+// Run it after editing the tokens; the result is committed.
+
+use Yuuues\YuuuUi\Tests\Support\Stylesheet;
+use Yuuues\YuuuUi\Tests\Support\TokensStylesheet;
+
+require \dirname(__DIR__).'/vendor/autoload.php';
+
+$path = TokensStylesheet::path();
+$tokens = TokensStylesheet::render(Stylesheet::source());
+
+if (false === file_put_contents($path, $tokens)) {
+    fwrite(\STDERR, "Cannot write {$path}\n");
+    exit(1);
+}
+
+echo "Wrote {$path}\n";

@@ -12,21 +12,23 @@ use Yuuues\YuuuUi\YuuuUiBundle;
  */
 final class Stylesheet
 {
-    public static function source(): string
+    /** The base stylesheet, or any other file given (tokens.css). */
+    public static function source(?string $path = null): string
     {
-        $css = file_get_contents(YuuuUiBundle::stylesheetPath());
+        $path ??= YuuuUiBundle::stylesheetPath();
+        $css = is_file($path) ? file_get_contents($path) : false;
 
         if (false === $css) {
-            throw new \RuntimeException('Cannot read the stylesheet.');
+            throw new \RuntimeException('Cannot read the stylesheet: '.$path);
         }
 
         return $css;
     }
 
     /** The source without comments, so that prose cannot fake or hide a rule. */
-    public static function code(): string
+    public static function code(?string $path = null): string
     {
-        return (string) preg_replace('#/\*.*?\*/#s', '', self::source());
+        return (string) preg_replace('#/\*.*?\*/#s', '', self::source($path));
     }
 
     /**
@@ -35,12 +37,12 @@ final class Stylesheet
      *
      * @return array<string, string>
      */
-    public static function colors(string $mode): array
+    public static function colors(string $mode, ?string $path = null): array
     {
-        $colors = self::declarations('/^:root\s*\{(.*?)^\}/ms');
+        $colors = self::declarations('/^:root\s*\{(.*?)^\}/ms', $path);
 
         if ('dark' === $mode) {
-            $colors = array_merge($colors, self::declarations('/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{(.*?)^    \}/ms'));
+            $colors = array_merge($colors, self::declarations('/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{(.*?)^    \}/ms', $path));
         }
 
         return $colors;
@@ -52,9 +54,9 @@ final class Stylesheet
      *
      * @return list<string>
      */
-    public static function declaredTokens(): array
+    public static function declaredTokens(?string $path = null): array
     {
-        if (1 !== preg_match('/^:root\s*\{(.*?)^\}/ms', self::code(), $block)) {
+        if (1 !== preg_match('/^:root\s*\{(.*?)^\}/ms', self::code($path), $block)) {
             throw new \RuntimeException('Cannot find the :root block.');
         }
 
@@ -64,9 +66,9 @@ final class Stylesheet
     }
 
     /** @return list<string> the tokens redefined in dark mode, colours or not */
-    public static function darkTokens(): array
+    public static function darkTokens(?string $path = null): array
     {
-        if (1 !== preg_match('/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{(.*?)^    \}/ms', self::code(), $block)) {
+        if (1 !== preg_match('/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{(.*?)^    \}/ms', self::code($path), $block)) {
             throw new \RuntimeException('Cannot find the dark :root block.');
         }
 
@@ -118,9 +120,9 @@ final class Stylesheet
     }
 
     /** @return array<string, string> */
-    private static function declarations(string $blockPattern): array
+    private static function declarations(string $blockPattern, ?string $path): array
     {
-        if (1 !== preg_match($blockPattern, self::code(), $block)) {
+        if (1 !== preg_match($blockPattern, self::code($path), $block)) {
             throw new \RuntimeException('Cannot find the tokens block: '.$blockPattern);
         }
 

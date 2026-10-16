@@ -1,0 +1,12 @@
+{
+    "name": "yuuu-ui-consumer-check",
+    "private": true,
+    "description": "A throwaway Vite + Preact app that installs the packed yuuu-ui and builds single-file pages with it. Run by bin/verify-package; never shipped.",
+    "type": "module",
+    "devDependencies": {
+        "lightningcss": "1.33.0",
+        "preact": "11.0.1",
+        "vite": "8.3.4",
+        "vite-plugin-singlefile": "2.3.3"
+    }
+}

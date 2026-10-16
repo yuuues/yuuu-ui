@@ -1,0 +1,23 @@
+{
+    "name": "@yuuues/yuuu-ui",
+    "version": "0.4.0",
+    "description": "Design tokens and base stylesheet of the yuuu suite as importable CSS: dark mode, WCAG AA contrast (AAA targeted), no external resources",
+    "license": "MIT",
+    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yuuues/yuuu-ui.git"
+    },
+    "files": [
+        "public/css/tokens.css",
+        "public/css/yuuu-base.css"
+    ],
+    "exports": {
+        "./tokens.css": "./public/css/tokens.css",
+        "./base.css": "./public/css/yuuu-base.css",
+        "./package.json": "./package.json"
+    },
+    "sideEffects": [
+        "*.css"
+    ]
+}
