@@ -571,11 +571,14 @@ An app that overrides tokens decides whether its values apply to both schemes or
 
 ## 7. Accessibility and contrast
 
-**Policy: WCAG AA required, AAA targeted where reasonable.**
+**Policy: AAA wherever it serves the reader, AA the floor everywhere.** AAA is applied pragmatically, not to the letter: it is required where someone reads to do their work, and AA is enough where AAA would cost the design and help no reader. Whoever adds or restyles a piece here, or overrides a token in an app, follows this.
 
-- **Text** must reach **4.5:1** (WCAG 1.4.3, AA): the suite fails below it, at rest and on hovered or pressed buttons.
-- **AAA, 7:1** (WCAG 1.4.6) is the target for the default values wherever it does not spoil the neutral look. It is not a gate: the suite does not fail between 4.5:1 and 7:1. Today every default text pair **at rest** reaches it, in both schemes.
-- **Non-text** (control outlines, the invalid border, the focus ring) must reach **3:1** (WCAG 1.4.11). WCAG has no AAA level for it.
+- **AAA required, 7:1** (WCAG 1.4.6; **4.5:1 for large text**, 18.66 px bold or 24 px and up) for everything read to do the work: body text, data in tables and data lists, figures (times, amounts, hours), form labels and values, button labels **at rest**, notices, flashes and errors. In both schemes, and with each app's brand and tint overrides.
+- **AA is enough, 4.5:1** (WCAG 1.4.3) for secondary text where AAA would spoil the design for no reader: muted metadata («desde el 23/11», counts under a title), placeholders, and the transient **hovered or pressed** states of buttons. Disabled controls are exempt, as in WCAG.
+- **Non-text, 3:1** (WCAG 1.4.11; WCAG has no AAA level for it): control outlines, the invalid border, the focus ring, an accent used only as a marker (an active tab's underline, a status dot), borders and dividers.
+- **Beyond contrast**, the AAA criteria that matter for the suite's apps: anything tapped is at least **44×44 px** (WCAG 2.5.5, clocking buttons and kiosks above all); the **focus is always visible**; and **no meaning is carried by colour alone** (a badge says «Activo», it is not only green).
+
+> **Status.** This policy was adopted on 2026-11-23 (yuuuTime decision T-180) and is enforced by the tests from **0.5**, which classify every pair as «reading» (AAA) or «secondary» (AA). Until then the tests below fail only under AA; every default text pair at rest already reaches AAA, but the dark `.btn--danger` hover and press states and any brand override must be checked by hand.
 
 `tests/Unit/Styles/StylesheetContrastTest.php` reads the real token values from the stylesheet and checks every pair the CSS paints together, in both schemes. It also fails when a token is painted as a text colour or a background without a pair in its lists, and when a `brightness()` filter is not checked. Current values (AAA = 7:1 or more):
 
