@@ -1037,7 +1037,7 @@ fieldset {
     display: grid;
     grid-template-columns: 15rem minmax(0, 1fr);
     align-items: start;
-    min-height: 100vh;
+    align-content: start;
 }
 
 /* Lets a wide table or a long word shrink instead of widening the page. */
@@ -1047,6 +1047,7 @@ fieldset {
 
 .side-nav {
     display: flex;
+    align-self: stretch;
     flex-direction: column;
     gap: var(--yuuu-space-1);
     padding: var(--yuuu-space-4);
@@ -1154,7 +1155,12 @@ fieldset {
     align-items: center;
     min-height: 2.75rem;
     padding: var(--yuuu-space-2) var(--yuuu-space-1);
-    border-bottom: 2px solid transparent;
+    border-style: solid;
+    border-width: 0 0 2px;
+    border-color: transparent;
+    background: none;
+    font: inherit;
+    cursor: pointer;
     color: var(--yuuu-color-text);
     font-weight: 500;
     text-decoration: none;
@@ -1239,7 +1245,7 @@ fieldset {
     display: grid;
     grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr);
     gap: var(--yuuu-space-3) var(--yuuu-space-4);
-    margin: 0;
+    margin: 0 0 var(--yuuu-space-4);
 }
 
 .data-list dt {
@@ -1261,6 +1267,10 @@ fieldset {
     justify-content: space-between;
     gap: var(--yuuu-space-2) var(--yuuu-space-4);
     text-align: start;
+}
+
+.card__header:has(> .card__action) > * {
+    margin-bottom: 0;
 }
 
 .card__action {
@@ -1303,7 +1313,7 @@ html[data-density="compact"] {
 
 /* Smaller targets only for a precise pointer. A finger keeps the 44 px
    (2.75rem) of the default density. */
-@media (pointer: fine) {
+@media (pointer: fine) and (not (any-pointer: coarse)) {
     html[data-density="compact"] .btn:not(.btn--small),
     html[data-density="compact"] .pagination__link,
     html[data-density="compact"] input:not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"], [type="submit"], [type="button"], [type="reset"]),

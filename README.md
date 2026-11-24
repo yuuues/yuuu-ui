@@ -323,6 +323,15 @@ Tabs that are links to other pages (a `<nav>`), or the tabs of a widget (`role="
 </nav>
 ```
 
+With `role="tablist"`, the tabs may be `<button role="tab">`; the class resets the button chrome:
+
+```html
+<div class="tabs" role="tablist" aria-label="Employee">
+    <button class="tabs__link" role="tab" aria-selected="true" aria-controls="panel-profile" id="tab-profile">Profile</button>
+    <button class="tabs__link" role="tab" aria-selected="false" aria-controls="panel-hours" id="tab-hours" tabindex="-1">Hours</button>
+</div>
+```
+
 Accessibility: `aria-current="page"` or `aria-selected="true"` marks the open tab; the colour is not the only signal, the weight changes and a 2 px underline in `accent-ink` is drawn. The label stays in the text colour (reading tier). Tabs are 2.75rem tall.
 
 #### `.avatar`, `.avatar--small`, `.avatar--large`
@@ -366,7 +375,7 @@ Accessibility: a real description list, so the pairing is announced; long values
 
 ### Compact density
 
-`html[data-density="compact"]` shrinks the spacing steps `--yuuu-space-3` to `--yuuu-space-7` for dense screens. The `.btn`, `.pagination__link` and field heights drop from 2.75rem to 2.25rem **only for a fine pointer** (`@media (pointer: fine)`); under a coarse pointer (a finger) the 44 px stay. `.btn--small`, `.side-nav__link`, `.tabs__link` and `.card__action` keep their default size.
+`html[data-density="compact"]` shrinks the spacing steps `--yuuu-space-3` to `--yuuu-space-7` for dense screens. The `.btn`, `.pagination__link` and field heights drop from 2.75rem to 2.25rem **only when the device has no coarse pointer at all** (`@media (pointer: fine) and (not (any-pointer: coarse))`, so a touchscreen laptop keeps 44 px); anything tapped stays at 44 px (T-180). `.btn--small`, `.side-nav__link`, `.tabs__link` and `.card__action` keep their default size.
 
 ```html
 <html lang="en" data-density="compact">
@@ -748,11 +757,11 @@ Not tested, on purpose:
 - The `.card` accent stripe: an ornament, it carries no information.
 - **The edge of a `.modal` against the dimmed page.** A dialog's outline is not a control and WCAG 1.4.11 does not ask for 3:1, but it must still be visible. For the record, with the default backdrop: in light mode the white surface against the dimmed page is 4.19:1; in dark mode the surface alone would be 1.17:1, so the dialog takes the `border-strong` edge there, 3.95:1 against the dimmed page.
 
-**The components of 0.5 add no new colour pair either.** The side menu, tabs, avatar, stat figures and data list paint `text` and `text-muted` on `bg` or `surface`, and `accent-ink` on `accent-soft` (the current link, the avatar initials), all in the tables above. Everything people read to work (link and tab labels, stat values, data-list values, initials) is reading tier; `.stat__label`, `.side-nav__group` and `dt` are secondary. The tab underline and the side-menu bar are `accent-ink` on `surface`, 3:1 as a marker.
+**The components of 0.5 add no new colour pair either.** The side menu, tabs, avatar, stat figures and data list paint `text` and `text-muted` on `bg` or `surface`, and `accent-ink` on `accent-soft` (the current link, the avatar initials), all in the tables above. Everything people read to work (link and tab labels, stat values, data-list values, initials) is reading tier; `.stat__label`, `.side-nav__group` and `dt` are secondary. The tab underline and the side-menu bar are `accent-ink` as a marker, 3:1 on `surface` (menu) and on `bg` or `surface` (tabs).
 
 **The components of 0.3 add no new colour pair.** The dialogs, the breadcrumb, the pagination and the filter bar paint pairs already in the tables above: `text` on `surface` inside a `.modal`; `text` and `text-muted` on `bg` or `surface` for the breadcrumb, the pagination indicator and its dead ends; `border-strong` on `bg` or `surface` for the ring of a `.pagination__link`; the focus ring on `surface` inside dialogs (on a focused `.modal` itself the ring is drawn inside its edge, so it never falls on the backdrop). The backdrop carries no text.
 
-Also: a visible focus ring everywhere (`:focus-visible`), button borders in forced-colours (Windows high contrast) mode, no transitions under `prefers-reduced-motion`, 44px controls (32px for `.btn--small`; `.pagination__link` is 44px too). Dialogs are native `<dialog>` modals: focus is moved in and kept in by the browser, the page behind is inert, Escape closes, and the script returns focus to the trigger.
+Also: a visible focus ring everywhere (`:focus-visible`), button borders in forced-colours (Windows high contrast) mode, no transitions under `prefers-reduced-motion`, 44px controls (32px for `.btn--small`; `.pagination__link`, side-menu links, tabs and `.card__action` are 44px too; compact density gives 36px, only without any coarse pointer). Dialogs are native `<dialog>` modals: focus is moved in and kept in by the browser, the page behind is inert, Escape closes, and the script returns focus to the trigger.
 
 ## 8. Content Security Policy
 

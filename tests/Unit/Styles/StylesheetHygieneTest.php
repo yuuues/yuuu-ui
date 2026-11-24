@@ -105,9 +105,9 @@ final class StylesheetHygieneTest extends TestCase
         $outside = Stylesheet::code();
         $inside = '';
 
-        // `@media (pointer: fine) { ... }` blocks, by brace matching: the
+        // `@media (pointer: fine) and (not (any-pointer: coarse)) { ... }` blocks, by brace matching: the
         // rules inside hold braces of their own.
-        while (false !== ($start = strpos($outside, '@media (pointer: fine)'))) {
+        while (false !== ($start = strpos($outside, '@media (pointer: fine) and (not (any-pointer: coarse))'))) {
             $open = (int) strpos($outside, '{', $start);
             $depth = 0;
             $end = $open;
@@ -137,8 +137,8 @@ final class StylesheetHygieneTest extends TestCase
             return $found;
         };
 
-        self::assertNotSame([], $compactHeights($inside), 'The compact heights must exist, inside @media (pointer: fine).');
-        self::assertSame([], $compactHeights($outside), 'A compact height outside @media (pointer: fine) would shrink touch targets.');
+        self::assertNotSame([], $compactHeights($inside), 'The compact heights must exist, inside the fine-pointer media query.');
+        self::assertSame([], $compactHeights($outside), 'A compact height outside @media (pointer: fine) and (not (any-pointer: coarse)) would shrink touch targets.');
     }
 
     public function testTappableControlsAreAtLeast44px(): void
