@@ -95,7 +95,7 @@ final class StylesheetHygieneTest extends TestCase
     {
         $tokens = Stylesheet::declaredTokens();
 
-        foreach (['--yuuu-color-primary', '--yuuu-color-primary-text', '--yuuu-color-accent', '--yuuu-color-accent-text'] as $token) {
+        foreach (['--yuuu-color-primary', '--yuuu-color-primary-text', '--yuuu-color-accent', '--yuuu-color-accent-text', '--yuuu-color-accent-ink', '--yuuu-color-accent-soft'] as $token) {
             self::assertContains($token, $tokens);
         }
     }

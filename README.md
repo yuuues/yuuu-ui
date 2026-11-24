@@ -136,6 +136,8 @@ To use different values in dark mode, add your own dark block after it:
 | `--yuuu-color-primary-text` | `#ffffff` | `#111111` | Text on the primary colour |
 | `--yuuu-color-accent` | `#4e545e` | `#a0a7b1` | The stripe on top of `.card` |
 | `--yuuu-color-accent-text` | `#ffffff` | `#111111` | Text on the accent colour (for the app's own use) |
+| `--yuuu-color-accent-ink` | `#1b1f24` | `#e8eaed` | The accent as text, or as a marker, on `bg` and `surface` (for the app's own use) |
+| `--yuuu-color-accent-soft` | `#f2f4f7` | `#22262d` | A tinted background that carries `accent-ink` text (for the app's own use) |
 
 **You answer for the contrast of your own pair.** The base tests its defaults; it cannot test yours. Text on the primary colour must reach **4.5:1** (AA, required). Pick the text colour with the WCAG relative luminance, as yuuuID does for each company's colours: white or near-black (`#111111`), whichever contrasts more. For the CRM, `#ffffff` on `#4055ff` gives **5.30:1**: it passes AA.
 
@@ -159,6 +161,18 @@ The way out is to keep the bright tone for what carries no text (the `.card` str
 ```
 
 Even at 7:1 at rest, the hover and pressed filters bring the pair below 7:1 (`#1b34ff`: 6.61:1 hovered, 6.20:1 pressed), still well above AA. A shade that holds 7:1 while pressed too is `#001cfe` (8.09:1 at rest). In dark mode the same applies with near-black text: `#8c99ff` with `#111111` gives 7.30:1 at rest.
+
+### The override contract
+
+These are the tokens an app may redefine in its own layer. Everything else (status colours, spacing, type, the backdrop) is not part of the contract. Override a group **together**, in light and in dark, and check each pair below: the base tests its defaults, not your values.
+
+| Group | Tokens | Pairs the override must still meet |
+|---|---|---|
+| Accent | `primary`, `primary-text`, `accent`, `accent-text`, `accent-ink`, `accent-soft` | Reading, **7:1**: `primary-text` on `primary`, `accent-text` on `accent`, `accent-ink` on `bg`, on `surface` and on `accent-soft`. Non-text, **3:1**: `accent-ink` on `surface` as a marker. |
+| Neutral tint | `bg`, `surface`, `border`, `border-strong`, `text`, `text-muted` | Reading, **7:1**: `text` and `text-muted` on `bg` and on `surface`, and `text` on every status background and on `accent-soft`. Non-text, **3:1**: `border-strong` on `bg` and on `surface`. `border` is decorative. |
+| Shape | `radius-1`, `radius-2`, `shadow` | No contrast pair. The shadow must not be the only edge of a control: its outline is `border-strong`. |
+
+Secondary text (4.5:1) is the tier for muted metadata and the hovered or pressed states of buttons; the base lists no secondary pair yet. An app's own test can reuse the lists through `StylesheetContrastTest::pairsFor('reading' | 'secondary' | 'control')`.
 
 ### Other tokens
 
@@ -578,31 +592,34 @@ An app that overrides tokens decides whether its values apply to both schemes or
 - **Non-text, 3:1** (WCAG 1.4.11; WCAG has no AAA level for it): control outlines, the invalid border, the focus ring, an accent used only as a marker (an active tab's underline, a status dot), borders and dividers.
 - **Beyond contrast**, the AAA criteria that matter for the suite's apps: anything tapped is at least **44×44 px** (WCAG 2.5.5, clocking buttons and kiosks above all); the **focus is always visible**; and **no meaning is carried by colour alone** (a badge says «Activo», it is not only green).
 
-> **Status.** This policy was adopted on 2026-11-23 (yuuuTime decision T-180) and is enforced by the tests from **0.5**, which classify every pair as «reading» (AAA) or «secondary» (AA). Until then the tests below fail only under AA; every default text pair at rest already reaches AAA, but the dark `.btn--danger` hover and press states and any brand override must be checked by hand.
+> **Status.** This policy was adopted on 2026-11-23 (yuuuTime decision T-180). From **0.5** the tests enforce the tiers: every pair is classified as «reading» (7:1, or 4.5:1 if marked large) or «secondary» (4.5:1), and the control pairs stay at 3:1. `StylesheetContrastTest::pairsFor("reading" | "secondary" | "control")` returns the lists, so an app can run its own override through the same tiers. The dark `.btn--danger` hover and press states are AA only, as the policy allows.
 
 `tests/Unit/Styles/StylesheetContrastTest.php` reads the real token values from the stylesheet and checks every pair the CSS paints together, in both schemes. It also fails when a token is painted as a text colour or a background without a pair in its lists, and when a `brightness()` filter is not checked. Current values (AAA = 7:1 or more):
 
 | Text pair | Light | Dark | Required | AAA |
 |---|---|---|---|---|
-| `text` on `bg` | 15.31:1 | 15.68:1 | 4.5 | yes |
-| `text` on `surface` | 16.56:1 | 14.46:1 | 4.5 | yes |
-| `text-muted` on `bg` | 7.05:1 | 7.79:1 | 4.5 | yes |
-| `text-muted` on `surface` | 7.63:1 | 7.18:1 | 4.5 | yes |
-| `danger-text` on `surface` (`.field-error`) | 7.71:1 | 8.98:1 | 4.5 | yes |
-| `danger-text` on `bg` | 7.13:1 | 9.73:1 | 4.5 | yes |
-| `success-text` on `success-bg` | 7.07:1 | 10.14:1 | 4.5 | yes |
-| `warning-text` on `warning-bg` | 7.21:1 | 10.45:1 | 4.5 | yes |
-| `danger-text` on `danger-bg` | 7.10:1 | 8.98:1 | 4.5 | yes |
-| `info-text` on `info-bg` | 7.05:1 | 9.88:1 | 4.5 | yes |
-| `neutral-text` on `neutral-bg` | 8.41:1 | 9.90:1 | 4.5 | yes |
-| `text` on `success-bg` (a link in a flash) | 15.70:1 | 13.61:1 | 4.5 | yes |
-| `text` on `warning-bg` | 15.87:1 | 13.41:1 | 4.5 | yes |
-| `text` on `danger-bg` | 15.23:1 | 14.46:1 | 4.5 | yes |
-| `text` on `info-bg` | 15.41:1 | 14.50:1 | 4.5 | yes |
-| `text` on `neutral-bg` | 15.03:1 | 12.60:1 | 4.5 | yes |
-| `primary-text` on `primary` (defaults) | 16.56:1 | 15.67:1 | 4.5 | yes |
-| `accent-text` on `accent` (defaults) | 7.63:1 | 7.78:1 | 4.5 | yes |
-| `danger-solid-text` on `danger-solid` | 7.71:1 | 7.09:1 | 4.5 | yes |
+| `text` on `bg` | 15.31:1 | 15.68:1 | 7 | yes |
+| `text` on `surface` | 16.56:1 | 14.46:1 | 7 | yes |
+| `text-muted` on `bg` | 7.05:1 | 7.79:1 | 7 | yes |
+| `text-muted` on `surface` | 7.63:1 | 7.18:1 | 7 | yes |
+| `danger-text` on `surface` (`.field-error`) | 7.71:1 | 8.98:1 | 7 | yes |
+| `danger-text` on `bg` | 7.13:1 | 9.73:1 | 7 | yes |
+| `success-text` on `success-bg` | 7.07:1 | 10.14:1 | 7 | yes |
+| `warning-text` on `warning-bg` | 7.21:1 | 10.45:1 | 7 | yes |
+| `danger-text` on `danger-bg` | 7.10:1 | 8.98:1 | 7 | yes |
+| `info-text` on `info-bg` | 7.05:1 | 9.88:1 | 7 | yes |
+| `neutral-text` on `neutral-bg` | 8.41:1 | 9.90:1 | 7 | yes |
+| `text` on `success-bg` (a link in a flash) | 15.70:1 | 13.61:1 | 7 | yes |
+| `text` on `warning-bg` | 15.87:1 | 13.41:1 | 7 | yes |
+| `text` on `danger-bg` | 15.23:1 | 14.46:1 | 7 | yes |
+| `text` on `info-bg` | 15.41:1 | 14.50:1 | 7 | yes |
+| `text` on `neutral-bg` | 15.03:1 | 12.60:1 | 7 | yes |
+| `primary-text` on `primary` (defaults) | 16.56:1 | 15.67:1 | 7 | yes |
+| `accent-text` on `accent` (defaults) | 7.63:1 | 7.78:1 | 7 | yes |
+| `danger-solid-text` on `danger-solid` | 7.71:1 | 7.09:1 | 7 | yes |
+| `accent-ink` on `bg` (defaults) | 15.31:1 | 15.68:1 | 7 | yes |
+| `accent-ink` on `surface` (defaults) | 16.56:1 | 14.46:1 | 7 | yes |
+| `accent-ink` on `accent-soft` (defaults) | 15.03:1 | 12.60:1 | 7 | yes |
 
 | Hovered or pressed button (text and background dimmed) | Light | Dark | Required | AAA |
 |---|---|---|---|---|

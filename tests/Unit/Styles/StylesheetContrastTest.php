@@ -35,12 +35,23 @@ use Yuuues\YuuuUi\Tests\Support\Stylesheet;
  */
 final class StylesheetContrastTest extends TestCase
 {
+    /** Reading text, level AAA (WCAG 1.4.6); a pair marked large only needs the AA large-text ratio. */
+    private const float READING_MINIMUM = 7.0;
+
+    private const float LARGE_READING_MINIMUM = 4.5;
+
+    /** Secondary text, level AA (WCAG 1.4.3). */
     private const float TEXT_MINIMUM = 4.5;
 
     private const float NON_TEXT_MINIMUM = 3.0;
 
-    /** @var list<array{string, string}> foreground, background */
-    private const array TEXT_PAIRS = [
+    /**
+     * Text that is read to work: it must reach 7:1, or 4.5:1 when the
+     * optional third element marks it as large text.
+     *
+     * @var list<array{string, string}|array{string, string, bool}> foreground, background, large
+     */
+    private const array READING_PAIRS = [
         // Body text, links, headings, table cells, field values, the nav,
         // .btn--secondary (transparent: on a card, on the page, and on
         // the page colour when hovered). The .modal (text on surface;
@@ -76,7 +87,19 @@ final class StylesheetContrastTest extends TestCase
         ['--yuuu-color-accent-text', '--yuuu-color-accent'],
         // .btn--danger.
         ['--yuuu-color-danger-solid-text', '--yuuu-color-danger-solid'],
+        // The accent family: the accent as text on the page, on a card and
+        // on its own tinted background.
+        ['--yuuu-color-accent-ink', '--yuuu-color-bg'],
+        ['--yuuu-color-accent-ink', '--yuuu-color-surface'],
+        ['--yuuu-color-accent-ink', '--yuuu-color-accent-soft'],
     ];
+
+    /**
+     * Text that is not needed to work: it must reach 4.5:1. Empty for now.
+     *
+     * @var list<array{string, string}> foreground, background
+     */
+    private const array SECONDARY_PAIRS = [];
 
     /**
      * `.btn:hover` and `.btn:active` dim the whole button, text included,
@@ -111,7 +134,24 @@ final class StylesheetContrastTest extends TestCase
         // the edge: on the surface, never on the backdrop).
         ['--yuuu-color-text', '--yuuu-color-surface'],
         ['--yuuu-color-text', '--yuuu-color-bg'],
+        // The accent as a marker (a rule, a dot, an icon) on a card.
+        ['--yuuu-color-accent-ink', '--yuuu-color-surface'],
     ];
+
+    /**
+     * The pairs of a tier, for an app's own test to reuse.
+     *
+     * @return list<array{0: string, 1: string, 2?: bool}>
+     */
+    public static function pairsFor(string $tier): array
+    {
+        return match ($tier) {
+            'reading' => self::READING_PAIRS,
+            'secondary' => self::SECONDARY_PAIRS,
+            'control' => self::CONTROL_PAIRS,
+            default => throw new \InvalidArgumentException(\sprintf('Unknown tier "%s": use reading, secondary or control.', $tier)),
+        };
+    }
 
     /** @return iterable<string, array{string}> */
     public static function modes(): iterable
@@ -121,19 +161,44 @@ final class StylesheetContrastTest extends TestCase
     }
 
     #[DataProvider('modes')]
-    public function testTextReachesAa(string $mode): void
+    public function testReadingTextReachesAaa(string $mode): void
     {
         $colors = Stylesheet::colors($mode);
         $failures = [];
 
-        foreach (self::TEXT_PAIRS as [$foreground, $background]) {
+        foreach (self::pairsFor('reading') as $pair) {
+            [$foreground, $background] = $pair;
+            $minimum = ($pair[2] ?? false) ? self::LARGE_READING_MINIMUM : self::READING_MINIMUM;
+            $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
+            if ($ratio < $minimum) {
+                $failures[] = \sprintf('%s on %s in %s: %.2f:1 (needs %.1f)', $foreground, $background, $mode, $ratio, $minimum);
+            }
+        }
+
+        self::assertSame([], $failures, 'Reading text below 7:1 (WCAG 1.4.6).');
+    }
+
+    #[DataProvider('modes')]
+    public function testSecondaryTextReachesAa(string $mode): void
+    {
+        $colors = Stylesheet::colors($mode);
+        $failures = [];
+
+        foreach (self::pairsFor('secondary') as [$foreground, $background]) {
             $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
             if ($ratio < self::TEXT_MINIMUM) {
                 $failures[] = \sprintf('%s on %s in %s: %.2f:1', $foreground, $background, $mode, $ratio);
             }
         }
 
-        self::assertSame([], $failures, 'Text below 4.5:1 (WCAG 1.4.3).');
+        self::assertSame([], $failures, 'Secondary text below 4.5:1 (WCAG 1.4.3).');
+    }
+
+    public function testAnUnknownTierIsRejected(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        self::pairsFor('decorative');
     }
 
     #[DataProvider('modes')]
@@ -187,8 +252,9 @@ final class StylesheetContrastTest extends TestCase
 
         self::assertNotSame([], $foregrounds[1]);
         self::assertNotSame([], $backgrounds[1]);
-        self::assertSame([], array_values(array_diff(array_unique($foregrounds[1]), array_column(self::TEXT_PAIRS, 0))), 'Text colours without a pair.');
-        self::assertSame([], array_values(array_diff(array_unique($backgrounds[1]), array_column(self::TEXT_PAIRS, 1))), 'Backgrounds without a pair.');
+        $pairs = [...self::pairsFor('reading'), ...self::pairsFor('secondary')];
+        self::assertSame([], array_values(array_diff(array_unique($foregrounds[1]), array_column($pairs, 0))), 'Text colours without a pair.');
+        self::assertSame([], array_values(array_diff(array_unique($backgrounds[1]), array_column($pairs, 1))), 'Backgrounds without a pair.');
     }
 
     /** Every brightness() filter in the CSS is checked above. */
