@@ -6,8 +6,10 @@ namespace Yuuues\YuuuUi\Tests\Unit\Styles;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Yuuues\YuuuUi\Contrast;
 use Yuuues\YuuuUi\Tests\Support\Stylesheet;
 use Yuuues\YuuuUi\Tests\Support\TokensStylesheet;
+use Yuuues\YuuuUi\YuuuUiBundle;
 
 /**
  * `tokens.css` is generated from section 1 of `yuuu-base.css` and
@@ -37,10 +39,10 @@ final class TokensStylesheetTest extends TestCase
     #[DataProvider('modes')]
     public function testTheColoursAreTheContrastCheckedOnes(string $mode): void
     {
-        $colors = Stylesheet::colors($mode, TokensStylesheet::path());
+        $colors = Contrast::colors($mode, TokensStylesheet::path());
 
         self::assertGreaterThan(20, \count($colors));
-        self::assertSame(Stylesheet::colors($mode), $colors);
+        self::assertSame(Contrast::colors($mode, YuuuUiBundle::stylesheetPath()), $colors);
     }
 
     public function testEveryTokenOfTheBaseIsHere(): void
