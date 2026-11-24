@@ -1,0 +1,3 @@
+/* What an app using Tailwind writes: nothing else, never yuuu-base.css. */
+@import "tailwindcss";
+@import "@yuuues/yuuu-ui/tailwind.css";

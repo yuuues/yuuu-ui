@@ -1,0 +1,77 @@
+/*
+ * yuuu-ui for Tailwind CSS v4: the theme mapped to the --yuuu-* tokens,
+ * and the base classes of yuuu-base.css in the `components` layer.
+ *
+ *   @import "tailwindcss";
+ *   @import "@yuuues/yuuu-ui/tailwind.css";
+ *
+ * Never link yuuu-base.css as well: it is already imported here.
+ * Utilities live in a later layer than components, so `p-4` beats the
+ * padding of `.card`.
+ *
+ * This file is the only stylesheet of the package with an @import, and it
+ * is for an app that compiles Tailwind. No build step happens in yuuu-ui:
+ * the package ships this file as written. The no-@import rule of
+ * StylesheetHygieneTest covers yuuu-base.css and tokens.css only.
+ */
+
+@import "./yuuu-base.css" layer(components);
+
+/* Dark mode follows the system, as in yuuu-base.css. */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+/*
+ * `inline`: the utilities emit var(--yuuu-color-...) itself, not an
+ * intermediate --color-* variable, so an app's brand override of a
+ * --yuuu-* token (and the dark values) reach every utility.
+ * Tailwind's default palette, radii, shadows and fonts are reset: only
+ * the suite's names exist. Spacing keeps Tailwind's 0.25rem base, which
+ * is --yuuu-space-1.
+ */
+@theme inline {
+    --color-*: initial;
+    --radius-*: initial;
+    --shadow-*: initial;
+    --font-*: initial;
+
+    --color-bg: var(--yuuu-color-bg);
+    --color-surface: var(--yuuu-color-surface);
+    --color-border: var(--yuuu-color-border);
+    --color-border-strong: var(--yuuu-color-border-strong);
+    --color-text: var(--yuuu-color-text);
+    --color-muted: var(--yuuu-color-text-muted);
+    --color-primary: var(--yuuu-color-primary);
+    --color-primary-text: var(--yuuu-color-primary-text);
+    --color-accent: var(--yuuu-color-accent);
+    --color-accent-text: var(--yuuu-color-accent-text);
+    --color-accent-ink: var(--yuuu-color-accent-ink);
+    --color-accent-soft: var(--yuuu-color-accent-soft);
+
+    --color-success-text: var(--yuuu-color-success-text);
+    --color-success-bg: var(--yuuu-color-success-bg);
+    --color-success-border: var(--yuuu-color-success-border);
+    --color-warning-text: var(--yuuu-color-warning-text);
+    --color-warning-bg: var(--yuuu-color-warning-bg);
+    --color-warning-border: var(--yuuu-color-warning-border);
+    --color-danger-text: var(--yuuu-color-danger-text);
+    --color-danger-bg: var(--yuuu-color-danger-bg);
+    --color-danger-border: var(--yuuu-color-danger-border);
+    --color-info-text: var(--yuuu-color-info-text);
+    --color-info-bg: var(--yuuu-color-info-bg);
+    --color-info-border: var(--yuuu-color-info-border);
+    --color-neutral-text: var(--yuuu-color-neutral-text);
+    --color-neutral-bg: var(--yuuu-color-neutral-bg);
+    --color-neutral-border: var(--yuuu-color-neutral-border);
+    --color-danger-solid: var(--yuuu-color-danger-solid);
+    --color-danger-solid-text: var(--yuuu-color-danger-solid-text);
+
+    --radius-sm: var(--yuuu-radius-1);
+    --radius-lg: var(--yuuu-radius-2);
+
+    --shadow-card: var(--yuuu-shadow);
+
+    --font-sans: var(--yuuu-font);
+    --font-mono: var(--yuuu-font-mono);
+
+    --container-content: var(--yuuu-content-width);
+}

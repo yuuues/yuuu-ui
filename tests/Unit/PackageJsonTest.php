@@ -35,7 +35,7 @@ final class PackageJsonTest extends TestCase
         $package = self::json('package.json');
         $files = $package['files'];
 
-        self::assertSame(['./tokens.css', './base.css', './package.json'], array_keys($package['exports']));
+        self::assertSame(['./tokens.css', './base.css', './tailwind.css', './package.json'], array_keys($package['exports']));
         foreach ($package['exports'] as $subpath => $target) {
             self::assertIsString($target, $subpath);
             self::assertStringStartsWith('./', $target);

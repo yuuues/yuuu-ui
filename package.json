@@ -9,12 +9,14 @@
         "url": "git+https://github.com/yuuues/yuuu-ui.git"
     },
     "files": [
+        "public/css/tailwind.css",
         "public/css/tokens.css",
         "public/css/yuuu-base.css"
     ],
     "exports": {
         "./tokens.css": "./public/css/tokens.css",
         "./base.css": "./public/css/yuuu-base.css",
+        "./tailwind.css": "./public/css/tailwind.css",
         "./package.json": "./package.json"
     },
     "sideEffects": [

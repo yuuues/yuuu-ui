@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
 // One page per build: vite-plugin-singlefile inlines everything into a
-// single HTML file and needs a single input. ENTRY is "tokens" or "base".
+// single HTML file and needs a single input. ENTRY is "tokens", "base" or "utilities".
 const entry = process.env.ENTRY ?? 'tokens';
 
 export default defineConfig({
-    plugins: [viteSingleFile()],
+    plugins: [tailwindcss(), viteSingleFile()],
     logLevel: 'warn',
     build: {
         outDir: `dist/${entry}`,

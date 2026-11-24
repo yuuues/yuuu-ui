@@ -891,7 +891,7 @@ docker run --rm -v "$PWD":/app -w /app darkkyto/yuuu-app-ci-php:8.4-1 php bin/bu
 docker run --rm -v "$PWD":/app -w /app node:22-alpine sh bin/verify-package
 ```
 
-It checks the exact list of files `npm pack` ships, then copies `tests/npm` (a throwaway Vite + Preact app with a locked set of dependencies) to a temporary directory, installs the packed tarball into it with scripts off, and builds two single-file pages, one importing `tokens.css` and one `base.css`. It fails if the two subpaths do not resolve through `exports` (or a path outside them does), if either CSS file does not parse strictly (lightningcss), if a page is not one self-contained HTML file (a `src=`, an `href=`, a `<link>`, an `@import`, a `url()`, a `fetch()` or a dynamic `import()`), if the light or dark tokens are missing from it, or if the app's brand override does not come after the defaults. The working tree is never touched.
+It checks the exact list of files `npm pack` ships, then copies `tests/npm` (a throwaway Vite + Preact app with a locked set of dependencies) to a temporary directory, installs the packed tarball into it with scripts off, and builds three single-file pages, importing `tokens.css`, `base.css` and `tailwind.css` (with Tailwind). It fails if the two subpaths do not resolve through `exports` (or a path outside them does), if either CSS file does not parse strictly (lightningcss), if a page is not one self-contained HTML file (a `src=`, an `href=`, a `<link>`, an `@import`, a `url()`, a `fetch()` or a dynamic `import()`), if the light or dark tokens are missing from it, or if the app's brand override does not come after the defaults. The working tree is never touched.
 
 ## 12. Using yuuu-ui from a JavaScript app (Vite/Preact)
 
@@ -927,7 +927,7 @@ import './app.css';                  // the app's own layer, ALWAYS after
 | `@yuuues/yuuu-ui/tokens.css` | `public/css/tokens.css` | Every `--yuuu-*` custom property of §4, with its dark value, and `color-scheme: light dark`. Styles no element. |
 | `@yuuues/yuuu-ui/base.css` | `public/css/yuuu-base.css` | Exactly what Twig apps link: the tokens plus the base elements and the classes of §5. |
 
-Import **one** of the two: `base.css` already contains `tokens.css`. Take `tokens.css` when the app writes its own components and only wants the palette, dark mode, type and spacing to match the suite; take `base.css` to use the classes (`.btn`, `.card`, `.table`...). Only these two subpaths are public: `exports` refuses `@yuuues/yuuu-ui/public/css/...`.
+Import **one** of `tokens.css` and `base.css`: `base.css` already contains `tokens.css`. Take `tokens.css` when the app writes its own components and only wants the palette, dark mode, type and spacing to match the suite; take `base.css` to use the classes (`.btn`, `.card`, `.table`...). Only these subpaths are public: `exports` refuses `@yuuues/yuuu-ui/public/css/...`.
 
 `yuuu-ui.js` is not part of the package: it wires `data-` attributes for server-rendered pages, and in a Preact app the component owns its dialogs (`ref.current.showModal()`). The `.modal` classes of `base.css` work on any `<dialog>`.
 
@@ -973,6 +973,24 @@ Exactly as in §4, in the app's own CSS **imported after** yuuu-ui (Vite keeps t
 ```
 
 The app answers for the contrast of its own pair (§4, *Brand tokens*). Status colours are not meant to be overridden: an error has to look like an error in every app.
+
+### Tailwind
+
+An app that compiles [Tailwind CSS](https://tailwindcss.com) v4 imports the entry point after Tailwind:
+
+```css
+@import "tailwindcss";
+@import "@yuuues/yuuu-ui/tailwind.css";
+```
+
+- **Never link or import `yuuu-base.css` / `base.css` as well.** `tailwind.css` already imports it, into the `components` layer.
+- **Utilities beat components**, because Tailwind declares the `utilities` layer after `components`: `<div class="card p-2">` has the padding of `p-2`, not the one of `.card`.
+- **The theme is the tokens.** Colour utilities (`bg-*`, `text-*`, `border-*`...) take these names, each reading its `--yuuu-color-*` token, so dark mode and an app's brand override (�4) reach every utility:
+  `bg`, `surface`, `border`, `border-strong`, `text`, `muted` (`--yuuu-color-text-muted`), `primary`, `primary-text`, `accent`, `accent-text`, `accent-ink`, `accent-soft`, `danger-solid`, `danger-solid-text`, and `success`, `warning`, `danger`, `info`, `neutral`, each with `-text`, `-bg` and `-border` (`bg-success-bg text-success-text border-success-border`).
+  Also `rounded-sm` (6px) and `rounded-lg` (12px), `shadow-card`, `font-sans` and `font-mono`, and `max-w-content` (the content width).
+- **Tailwind's own palette is intentionally absent**: `bg-red-500` generates nothing, and neither do its other colours, radii, shadows or fonts. Colours outside the suite come from the app's own CSS.
+- **Spacing** stays on Tailwind's 0.25rem step, which is `--yuuu-space-1`: `p-4` is `--yuuu-space-4`.
+- **Dark mode follows the system.** `dark:` uses `prefers-color-scheme`; the tokens already switch on their own, so `dark:` is only for what has no token.
 
 ### Updating
 
