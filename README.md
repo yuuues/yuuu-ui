@@ -175,6 +175,68 @@ These are the tokens an app may redefine in its own layer. Everything else (stat
 
 Secondary text (4.5:1) is the tier for muted metadata (`text-muted` on `bg` and on `surface`) and the hovered or pressed states of buttons. An app's own test can reuse the lists through `StylesheetContrastTest::pairsFor('reading' | 'secondary' | 'control')`.
 
+### Worked example: warm teal
+
+yuuuTime overrides all three groups: a teal accent, teal-tinted neutrals and rounder corners. The file is `docs/preview/warm-teal.css`; open `docs/preview/index.html` to see every component with it or without it. `StylesheetContrastTest::testWarmTealExampleMeetsTheTiers()` lays it over the defaults and checks every pair of the contract, and the button filters, in both modes.
+
+```css
+/* public/css/app.css (yuuuTime) */
+:root {
+    --yuuu-color-bg: #f3f8f7;
+    --yuuu-color-surface: #ffffff;
+    --yuuu-color-border: #d3e3df;
+    --yuuu-color-border-strong: #7a908b;
+    --yuuu-color-text: #11211e;
+    --yuuu-color-text-muted: #45605a;
+
+    --yuuu-color-primary: #0f5f57;
+    --yuuu-color-primary-text: #ffffff;
+    --yuuu-color-accent: #14b8a6;
+    --yuuu-color-accent-text: #021a17;
+    --yuuu-color-accent-ink: #0a564e;
+    --yuuu-color-accent-soft: #dcf3ee;
+
+    --yuuu-radius-1: 10px;
+    --yuuu-radius-2: 14px;
+    --yuuu-shadow: 0 1px 2px rgb(15 40 36 / 0.05), 0 6px 20px rgb(15 40 36 / 0.07);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --yuuu-color-bg: #0e1413;
+        --yuuu-color-surface: #131c1b;
+        --yuuu-color-border: #1f2b29;
+        --yuuu-color-border-strong: #5f7a75;
+        --yuuu-color-text: #e6eeec;
+        --yuuu-color-text-muted: #9fb3af;
+
+        --yuuu-color-primary: #14b8a6;
+        --yuuu-color-primary-text: #021a17;
+        --yuuu-color-accent: #14b8a6;
+        --yuuu-color-accent-text: #021a17;
+        --yuuu-color-accent-ink: #5eead4;
+        --yuuu-color-accent-soft: #15302c;
+
+        --yuuu-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.3);
+    }
+}
+```
+
+| Pair | Needs | Light | Dark |
+|---|---|---|---|
+| `primary-text` on `primary` | 7 | 7.51 | 7.26 |
+| the same, hovered / pressed | 4.5 | 7.05 / 6.49 | 6.26 / 5.47 |
+| `accent-text` on `accent` | 7 | 7.26 | 7.26 |
+| `accent-ink` on `bg` / `surface` / `accent-soft` | 7 | 7.98 / 8.56 / 7.37 | 12.58 / 11.74 / 9.52 |
+| `text` on `bg` / `surface` / `accent-soft` | 7 | 15.54 / 16.67 / 14.36 | 15.78 / 14.72 / 11.94 |
+| `text-muted` on `bg` / `surface` | 4.5 | 6.37 / 6.83 | 8.46 / 7.89 |
+| `border-strong` on `bg` / `surface` | 3 | 3.16 / 3.39 | 4.01 / 3.74 |
+
+Two choices made it pass:
+
+- **One hue, two jobs.** The bright `#14b8a6` is the brand: the card stripe in light, the button in dark. In light, white on it gives only 2.5:1, so the button takes a deep shade of the same teal (`#0f5f57`) with white text, and the marker colour (`accent-ink`) is deeper still, so it reaches 7:1 on the pale `accent-soft` too.
+- **A darker near-black.** The mockup's `#04201c` on `#14b8a6` gives 6.87:1; a darker `#021a17` gives 7.26:1 and looks the same.
+
 ### Other tokens
 
 All tokens are prefixed with `--yuuu-` to avoid collisions with the app's own properties.
@@ -308,6 +370,8 @@ A management area: the side menu on the start side, the content beside it. Under
 </div>
 ```
 
+The shell is as tall as its content, so on a short desktop page the side menu column ends early. Give it the height left under the top bar: `min-height: calc(100vh - <header height>)` on `.app-shell`, or put the bar and the shell in a column (`display: flex; flex-direction: column; min-height: 100vh`) and give `.app-shell` `flex: 1`. The preview page (`docs/preview/index.html`) does the second.
+
 Accessibility: `aria-current="page"` marks the current link; the colour is not the only signal, the weight changes too and a bar marks the edge. Links are 2.75rem tall, the focus ring is the shared one, and `.side-nav__group` is secondary text (4.5:1).
 
 ### Tabs, people and figures
@@ -360,7 +424,7 @@ Accessibility: keep the label next to the value in the source order; a screen re
 
 #### `.data-list`
 
-A `<dl>` of label and value pairs in two columns (the label column 8 to 14rem). On narrow screens (30rem) it is one column: label, then value. Labels are secondary text, values are reading tier.
+A `<dl>` of label and value pairs in two columns (the label column as wide as its longest label, up to 14rem, so a narrow card leaves the values room). On narrow screens (30rem) it is one column: label, then value. Labels are secondary text, values are reading tier.
 
 ```html
 <dl class="data-list">

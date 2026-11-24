@@ -1,0 +1,55 @@
+/*
+ * Warm teal: the yuuuTime override (style «B»), as an app's own layer.
+ *
+ * Linked AFTER yuuu-base.css. It redefines only the override contract of
+ * README §4: the accent family, the neutral tint and the shape, in light
+ * and in dark. Status colours stay the suite's.
+ *
+ * Checked by StylesheetContrastTest::testWarmTealExampleMeetsTheTiers(),
+ * which parses this file like the base: one declaration per line, colours
+ * as #rrggbb, and the dark block as `@media (prefers-color-scheme: dark)
+ * { :root { ... } }`.
+ */
+
+:root {
+    /* Neutral tint: a teal-tinted near-white page, white cards. */
+    --yuuu-color-bg: #f3f8f7;
+    --yuuu-color-surface: #ffffff;
+    --yuuu-color-border: #d3e3df;
+    --yuuu-color-border-strong: #7a908b;
+    --yuuu-color-text: #11211e;
+    --yuuu-color-text-muted: #45605a;
+
+    /* Accent family: a deep teal button, the bright teal as the stripe. */
+    --yuuu-color-primary: #0f5f57;
+    --yuuu-color-primary-text: #ffffff;
+    --yuuu-color-accent: #14b8a6;
+    --yuuu-color-accent-text: #021a17;
+    --yuuu-color-accent-ink: #0a564e;
+    --yuuu-color-accent-soft: #dcf3ee;
+
+    /* Shape: rounder, with a softer shadow. */
+    --yuuu-radius-1: 10px;
+    --yuuu-radius-2: 14px;
+    --yuuu-shadow: 0 1px 2px rgb(15 40 36 / 0.05), 0 6px 20px rgb(15 40 36 / 0.07);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --yuuu-color-bg: #0e1413;
+        --yuuu-color-surface: #131c1b;
+        --yuuu-color-border: #1f2b29;
+        --yuuu-color-border-strong: #5f7a75;
+        --yuuu-color-text: #e6eeec;
+        --yuuu-color-text-muted: #9fb3af;
+
+        --yuuu-color-primary: #14b8a6;
+        --yuuu-color-primary-text: #021a17;
+        --yuuu-color-accent: #14b8a6;
+        --yuuu-color-accent-text: #021a17;
+        --yuuu-color-accent-ink: #5eead4;
+        --yuuu-color-accent-soft: #15302c;
+
+        --yuuu-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.3);
+    }
+}

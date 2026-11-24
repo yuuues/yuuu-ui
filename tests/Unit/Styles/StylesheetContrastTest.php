@@ -45,6 +45,9 @@ final class StylesheetContrastTest extends TestCase
 
     private const float NON_TEXT_MINIMUM = 3.0;
 
+    /** The override example of the preview page (README §4). */
+    private const string WARM_TEAL = __DIR__.'/../../../docs/preview/warm-teal.css';
+
     /**
      * Text that is read to work: it must reach 7:1, or 4.5:1 when the
      * optional third element marks it as large text.
@@ -165,35 +168,34 @@ final class StylesheetContrastTest extends TestCase
     #[DataProvider('modes')]
     public function testReadingTextReachesAaa(string $mode): void
     {
-        $colors = Stylesheet::colors($mode);
-        $failures = [];
-
-        foreach (self::pairsFor('reading') as $pair) {
-            [$foreground, $background] = $pair;
-            $minimum = ($pair[2] ?? false) ? self::LARGE_READING_MINIMUM : self::READING_MINIMUM;
-            $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
-            if ($ratio < $minimum) {
-                $failures[] = \sprintf('%s on %s in %s: %.2f:1 (needs %.1f)', $foreground, $background, $mode, $ratio, $minimum);
-            }
-        }
-
-        self::assertSame([], $failures, 'Reading text below 7:1 (WCAG 1.4.6).');
+        self::assertSame([], self::readingFailures(Stylesheet::colors($mode), $mode), 'Reading text below 7:1 (WCAG 1.4.6).');
     }
 
     #[DataProvider('modes')]
     public function testSecondaryTextReachesAa(string $mode): void
     {
-        $colors = Stylesheet::colors($mode);
-        $failures = [];
+        self::assertSame([], self::secondaryFailures(Stylesheet::colors($mode), $mode), 'Secondary text below 4.5:1 (WCAG 1.4.3).');
+    }
 
-        foreach (self::pairsFor('secondary') as [$foreground, $background]) {
-            $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
-            if ($ratio < self::SECONDARY_MINIMUM) {
-                $failures[] = \sprintf('%s on %s in %s: %.2f:1', $foreground, $background, $mode, $ratio);
-            }
-        }
+    /**
+     * The yuuuTime «warm teal» example of the preview page, laid over the
+     * defaults exactly as the browser cascades it: its light `:root` comes
+     * after the base's dark block, so in dark mode it wins wherever its own
+     * dark block does not redefine a token. Every tier, and the button
+     * filters, in both modes.
+     */
+    #[DataProvider('modes')]
+    public function testWarmTealExampleMeetsTheTiers(string $mode): void
+    {
+        $colors = array_merge(Stylesheet::colors($mode), Stylesheet::colors($mode, self::WARM_TEAL));
+        $failures = [
+            ...self::readingFailures($colors, $mode),
+            ...self::secondaryFailures($colors, $mode),
+            ...self::filteredFailures($colors, $mode),
+            ...self::controlFailures($colors, $mode),
+        ];
 
-        self::assertSame([], $failures, 'Secondary text below 4.5:1 (WCAG 1.4.3).');
+        self::assertSame([], $failures, 'The warm teal example misses a contrast tier.');
     }
 
     public function testAnUnknownTierIsRejected(): void
@@ -206,39 +208,13 @@ final class StylesheetContrastTest extends TestCase
     #[DataProvider('modes')]
     public function testTextReachesAaUnderTheButtonFilters(string $mode): void
     {
-        $colors = Stylesheet::colors($mode);
-        $failures = [];
-
-        foreach (self::FILTERED_TEXT_PAIRS as [$foreground, $background, $factor, $backgroundDimmed]) {
-            $text = Stylesheet::brightness(self::color($colors, $foreground), $factor);
-            $behind = self::color($colors, $background);
-            if ($backgroundDimmed) {
-                $behind = Stylesheet::brightness($behind, $factor);
-            }
-
-            $ratio = Stylesheet::contrast($text, $behind);
-            if ($ratio < self::SECONDARY_MINIMUM) {
-                $failures[] = \sprintf('%s on %s at brightness(%s) in %s: %.2f:1', $foreground, $background, $factor, $mode, $ratio);
-            }
-        }
-
-        self::assertSame([], $failures, 'Text below 4.5:1 (WCAG 1.4.3) on a hovered or pressed button.');
+        self::assertSame([], self::filteredFailures(Stylesheet::colors($mode), $mode), 'Text below 4.5:1 (WCAG 1.4.3) on a hovered or pressed button.');
     }
 
     #[DataProvider('modes')]
     public function testControlOutlinesReachThreeToOne(string $mode): void
     {
-        $colors = Stylesheet::colors($mode);
-        $failures = [];
-
-        foreach (self::CONTROL_PAIRS as [$foreground, $background]) {
-            $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
-            if ($ratio < self::NON_TEXT_MINIMUM) {
-                $failures[] = \sprintf('%s on %s in %s: %.2f:1', $foreground, $background, $mode, $ratio);
-            }
-        }
-
-        self::assertSame([], $failures, 'Control outline below 3:1 (WCAG 1.4.11).');
+        self::assertSame([], self::controlFailures(Stylesheet::colors($mode), $mode), 'Control outline below 3:1 (WCAG 1.4.11).');
     }
 
     /**
@@ -292,6 +268,86 @@ final class StylesheetContrastTest extends TestCase
         self::assertEqualsWithDelta(4.48, Stylesheet::contrast('#777777', '#ffffff'), 0.01);
         self::assertSame('#d9d9d9', Stylesheet::brightness('#ffffff', 0.85));
         self::assertSame('#000000', Stylesheet::brightness('#000000', 0.5));
+    }
+
+    /**
+     * @param array<string, string> $colors
+     *
+     * @return list<string>
+     */
+    private static function readingFailures(array $colors, string $mode): array
+    {
+        $failures = [];
+        foreach (self::pairsFor('reading') as $pair) {
+            [$foreground, $background] = $pair;
+            $minimum = ($pair[2] ?? false) ? self::LARGE_READING_MINIMUM : self::READING_MINIMUM;
+            $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
+            if ($ratio < $minimum) {
+                $failures[] = \sprintf('%s on %s in %s: %.2f:1 (needs %.1f)', $foreground, $background, $mode, $ratio, $minimum);
+            }
+        }
+
+        return $failures;
+    }
+
+    /**
+     * @param array<string, string> $colors
+     *
+     * @return list<string>
+     */
+    private static function secondaryFailures(array $colors, string $mode): array
+    {
+        $failures = [];
+        foreach (self::pairsFor('secondary') as [$foreground, $background]) {
+            $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
+            if ($ratio < self::SECONDARY_MINIMUM) {
+                $failures[] = \sprintf('%s on %s in %s: %.2f:1 (needs 4.5)', $foreground, $background, $mode, $ratio);
+            }
+        }
+
+        return $failures;
+    }
+
+    /**
+     * @param array<string, string> $colors
+     *
+     * @return list<string>
+     */
+    private static function filteredFailures(array $colors, string $mode): array
+    {
+        $failures = [];
+        foreach (self::FILTERED_TEXT_PAIRS as [$foreground, $background, $factor, $backgroundDimmed]) {
+            $text = Stylesheet::brightness(self::color($colors, $foreground), $factor);
+            $behind = self::color($colors, $background);
+            if ($backgroundDimmed) {
+                $behind = Stylesheet::brightness($behind, $factor);
+            }
+
+            $ratio = Stylesheet::contrast($text, $behind);
+            if ($ratio < self::SECONDARY_MINIMUM) {
+                $failures[] = \sprintf('%s on %s at brightness(%s) in %s: %.2f:1 (needs 4.5)', $foreground, $background, $factor, $mode, $ratio);
+            }
+        }
+
+        return $failures;
+    }
+
+    /**
+     * @param array<string, string> $colors
+     *
+     * @return list<string>
+     */
+    private static function controlFailures(array $colors, string $mode): array
+    {
+        $failures = [];
+        foreach (self::CONTROL_PAIRS as [$foreground, $background]) {
+            $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
+            if ($ratio < self::NON_TEXT_MINIMUM) {
+                $failures[] = \sprintf('%s on %s in %s: %.2f:1 (needs 3)', $foreground, $background, $mode, $ratio);
+            }
+        }
+
+        return $failures;
     }
 
     /** @param array<string, string> $colors */

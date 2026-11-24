@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>yuuu-ui preview</title>
+    <!--
+        Every component of yuuu-base.css on one page, with the defaults or
+        the yuuuTime «warm teal» override (warm-teal.css, README §4).
+        Plain HTML, no build: open this file in a browser.
+
+        Light or dark follows the system (prefers-color-scheme), as in the
+        apps. Query parameters, for screenshots:
+          ?theme=defaults   start without warm-teal.css
+          ?density=compact  start with html[data-density="compact"]
+          ?open=edit-person open a dialog by id (or confirm-delete)
+    -->
+    <link rel="stylesheet" href="../../public/css/yuuu-base.css">
+    <link rel="stylesheet" href="warm-teal.css" id="warm-teal">
+    <script src="../../public/js/yuuu-ui.js" defer></script>
+    <style>
+        /* Preview-only layout. Not part of yuuu-ui: the pv- prefix marks it. */
+
+        /* The shell fills the viewport below the top bar (README §5,
+           "App shell"), so the side menu runs to the bottom of a short page. */
+        .pv-frame {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .pv-frame > .app-shell {
+            flex: 1;
+        }
+
+        .pv-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--yuuu-space-2) var(--yuuu-space-5);
+            padding: var(--yuuu-space-2) var(--yuuu-space-4);
+            background: var(--yuuu-color-accent-soft);
+            color: var(--yuuu-color-accent-ink);
+            font-size: 0.875rem;
+        }
+
+        .pv-bar p {
+            margin: 0;
+        }
+
+        .pv-pair {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--yuuu-space-2);
+        }
+
+        .pv-mark {
+            display: inline-block;
+            width: 1.375rem;
+            height: 1.375rem;
+            margin-inline-end: var(--yuuu-space-2);
+            border-radius: var(--yuuu-radius-1);
+            background: var(--yuuu-color-accent);
+            vertical-align: -0.25rem;
+        }
+
+        .pv-section {
+            margin-block: var(--yuuu-space-6);
+        }
+
+        .pv-section > h2 {
+            margin-bottom: var(--yuuu-space-3);
+            padding-bottom: var(--yuuu-space-2);
+            border-bottom: 1px solid var(--yuuu-color-border);
+            font-size: 1.125rem;
+        }
+
+        .pv-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--yuuu-space-3);
+        }
+
+        .pv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+            align-items: start;
+            gap: var(--yuuu-space-5);
+        }
+
+        .pv-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+            gap: var(--yuuu-space-4);
+            padding: var(--yuuu-space-4) var(--yuuu-space-5);
+            margin-bottom: var(--yuuu-space-5);
+            background: var(--yuuu-color-surface);
+            border: 1px solid var(--yuuu-color-border);
+            border-radius: var(--yuuu-radius-2);
+        }
+
+        .pv-person {
+            display: flex;
+            align-items: center;
+            gap: var(--yuuu-space-4);
+        }
+
+        .pv-person h1,
+        .pv-person p {
+            margin: 0;
+        }
+
+        .pv-stack > * + * {
+            margin-top: var(--yuuu-space-3);
+        }
+    </style>
+</head>
+<body>
+<div class="pv-frame">
+    <div class="pv-bar" lang="en">
+        <p><strong>yuuu-ui preview.</strong> Light or dark follows your system.</p>
+        <form class="inline" id="pv-controls">
+            <span class="pv-pair">
+                <label for="pv-theme">Theme</label>
+                <select id="pv-theme">
+                    <option value="warm">Warm teal (yuuuTime)</option>
+                    <option value="defaults">Defaults</option>
+                </select>
+            </span>
+            <span class="pv-pair">
+                <label for="pv-density">Density</label>
+                <select id="pv-density">
+                    <option value="default">Default</option>
+                    <option value="compact">Compact</option>
+                </select>
+            </span>
+        </form>
+    </div>
+
+    <nav class="nav" aria-label="Principal">
+        <a class="nav__brand" href="#"><span class="pv-mark" aria-hidden="true"></span>yuuuTime</a>
+        <ul class="nav__links">
+            <li><a href="#">Fichar</a></li>
+            <li><a href="#">Perfil</a></li>
+            <li><a href="#" aria-current="page">Gestión</a></li>
+        </ul>
+        <div class="nav__end">
+            <span class="avatar avatar--small" aria-hidden="true">EL</span>
+            <span class="muted">Elsa Lundqvist</span>
+            <form class="inline" action="#">
+                <button type="button" class="btn btn--secondary btn--small">Salir</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="app-shell">
+        <nav class="side-nav" aria-label="Gestión">
+            <p class="side-nav__group">Equipo</p>
+            <a class="side-nav__link" href="#" aria-current="page">Personas</a>
+            <a class="side-nav__link" href="#">Centros</a>
+            <p class="side-nav__group">Registro</p>
+            <a class="side-nav__link" href="#">Cierre de mes</a>
+            <a class="side-nav__link" href="#">Accesos externos</a>
+            <p class="side-nav__group">Dispositivos</p>
+            <a class="side-nav__link" href="#">Quiosco</a>
+        </nav>
+
+        <main class="page">
+            <nav class="breadcrumb" aria-label="Migas">
+                <ol>
+                    <li><a href="#">Gestión</a></li>
+                    <li><a href="#">Personas</a></li>
+                    <li><span aria-current="page">Elsa Lundqvist</span></li>
+                </ol>
+            </nav>
+
+            <header class="page-header">
+                <div class="pv-person">
+                    <span class="avatar avatar--large" aria-hidden="true">EL</span>
+                    <div>
+                        <h1>Elsa Lundqvist</h1>
+                        <p class="muted">Gerencia · Centro Norte</p>
+                    </div>
+                </div>
+                <div class="page-actions">
+                    <a class="btn btn--secondary" href="#">Exportar</a>
+                    <a class="btn btn--primary" href="#editar" data-modal-open="edit-person">Editar ficha</a>
+                </div>
+            </header>
+
+            <nav class="tabs" aria-label="Persona">
+                <a class="tabs__link" href="#" aria-current="page">Resumen</a>
+                <a class="tabs__link" href="#">Fichajes</a>
+                <a class="tabs__link" href="#">Ausencias</a>
+                <a class="tabs__link" href="#">Documentos</a>
+            </nav>
+
+            <div class="pv-stats">
+                <div class="stat">
+                    <span class="stat__label">Horas esta semana</span>
+                    <span class="stat__value">37:30</span>
+                </div>
+                <div class="stat">
+                    <span class="stat__label">Bolsa de horas</span>
+                    <span class="stat__value">+4:15</span>
+                </div>
+                <div class="stat">
+                    <span class="stat__label">Vacaciones pendientes</span>
+                    <span class="stat__value">12 días</span>
+                </div>
+            </div>
+
+            <p class="flash flash--success" role="status">Fichaje de salida registrado a las 17:32.</p>
+
+            <div class="pv-grid">
+                <section class="card" aria-labelledby="contact-title">
+                    <div class="card__header">
+                        <h2 id="contact-title">Contacto</h2>
+                        <a class="card__action" href="#" aria-label="Editar contacto">Editar</a>
+                    </div>
+                    <dl class="data-list">
+                        <dt>Email</dt>
+                        <dd>elsa@example.com</dd>
+                        <dt>Teléfono</dt>
+                        <dd>+34 600 000 000</dd>
+                        <dt>Alta</dt>
+                        <dd>2026-03-02</dd>
+                    </dl>
+                </section>
+
+                <section class="card" aria-labelledby="shift-title">
+                    <div class="card__header">
+                        <h2 id="shift-title">Turno</h2>
+                        <a class="card__action" href="#" aria-label="Ver todos los turnos">Ver todos</a>
+                    </div>
+                    <dl class="data-list">
+                        <dt>Patrón</dt>
+                        <dd>Mañanas, L–V</dd>
+                        <dt>Jornada</dt>
+                        <dd>37:30 semanales</dd>
+                        <dt>Centro</dt>
+                        <dd>Centro Norte</dd>
+                    </dl>
+                </section>
+            </div>
+
+            <section class="pv-section" aria-labelledby="records-title">
+                <h2 id="records-title">Fichajes</h2>
+                <form class="filter-bar" method="get" action="#" role="search" aria-label="Fichajes">
+                    <div class="filter-bar__field filter-bar__field--search">
+                        <label for="filter-q">Buscar</label>
+                        <input id="filter-q" name="q" type="search" value="noviembre">
+                    </div>
+                    <div class="filter-bar__field">
+                        <label for="filter-status">Estado</label>
+                        <select id="filter-status" name="status">
+                            <option value="">Todos</option>
+                            <option value="ok" selected>Correcto</option>
+                            <option value="review">En revisión</option>
+                        </select>
+                    </div>
+                    <div class="filter-bar__actions">
+                        <button type="button" class="btn btn--secondary">Filtrar</button>
+                        <a class="btn btn--secondary" href="#">Limpiar</a>
+                    </div>
+                </form>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr><th>Día</th><th>Entrada</th><th>Salida</th><th>Total</th><th>Estado</th><th><span class="visually-hidden">Acciones</span></th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Lun 23 nov</td><td>08:58</td><td>17:32</td><td>8:04</td>
+                                <td><span class="badge badge--success">Correcto</span></td>
+                                <td><a class="btn btn--secondary btn--small" href="#">Ver</a></td>
+                            </tr>
+                            <tr>
+                                <td>Vie 20 nov</td><td>09:12</td><td>15:05</td><td>5:53</td>
+                                <td><span class="badge badge--warning">En revisión</span></td>
+                                <td><a class="btn btn--secondary btn--small" href="#">Ver</a></td>
+                            </tr>
+                            <tr>
+                                <td>Jue 19 nov</td><td>08:55</td><td>—</td><td>—</td>
+                                <td><span class="badge badge--danger">Sin salida</span></td>
+                                <td>
+                                    <form class="inline" method="post" action="#">
+                                        <button class="btn btn--danger btn--small" data-confirm="confirm-delete">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Mié 18 nov</td><td>—</td><td>—</td><td>—</td>
+                                <td><span class="badge badge--info">Vacaciones</span></td>
+                                <td><a class="btn btn--secondary btn--small" href="#">Ver</a></td>
+                            </tr>
+                            <tr>
+                                <td>Mar 17 nov</td><td>08:47</td><td>17:01</td><td>8:14</td>
+                                <td><span class="badge badge--neutral">Cerrado</span></td>
+                                <td><a class="btn btn--secondary btn--small" href="#">Ver</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav class="pagination" aria-label="Paginación">
+                    <span class="pagination__link" aria-hidden="true">Anterior</span>
+                    <span class="pagination__current" aria-current="page">Página 1 de 3</span>
+                    <a class="pagination__link" href="#" rel="next">Siguiente</a>
+                </nav>
+            </section>
+
+            <section class="pv-section" aria-labelledby="absence-title">
+                <h2 id="absence-title">Formulario</h2>
+                <div class="pv-grid">
+                    <section class="card" aria-labelledby="absence-form-title">
+                        <div class="card__header">
+                            <h2 id="absence-form-title">Solicitar ausencia</h2>
+                            <p class="muted">Gerencia la revisa en 48 h.</p>
+                        </div>
+                        <form method="post" action="#">
+                            <label for="absence-type">Tipo</label>
+                            <select id="absence-type" name="type">
+                                <option>Vacaciones</option>
+                                <option>Asuntos propios</option>
+                                <option>Baja médica</option>
+                            </select>
+                            <label for="absence-from">Desde</label>
+                            <input id="absence-from" name="from" type="date" value="2026-12-21">
+                            <label for="absence-days">Días</label>
+                            <input id="absence-days" name="days" type="number" value="0" aria-invalid="true" aria-describedby="absence-days-error">
+                            <p class="field-error" id="absence-days-error">Indica al menos un día.</p>
+                            <label for="absence-notes">Notas</label>
+                            <textarea id="absence-notes" name="notes">Navidades con la familia.</textarea>
+                            <label><input type="checkbox" name="notify" checked> Avisar a mi responsable</label>
+                            <button type="button" class="btn btn--primary">Enviar solicitud</button>
+                        </form>
+                    </section>
+
+                    <div class="pv-stack">
+                        <div class="empty-state">
+                            <p>Elsa no tiene documentos todavía.</p>
+                            <a class="btn btn--primary" href="#">Subir documento</a>
+                        </div>
+                        <p class="muted">Última sesión hace 3 días.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="pv-section" aria-labelledby="buttons-title" lang="en">
+                <h2 id="buttons-title">Buttons</h2>
+                <div class="pv-row">
+                    <button type="button" class="btn btn--primary">Primary</button>
+                    <button type="button" class="btn btn--secondary">Secondary</button>
+                    <button type="button" class="btn btn--danger">Danger</button>
+                    <button type="button" class="btn btn--secondary btn--small">Small</button>
+                    <button type="button" class="btn btn--primary" disabled>Disabled</button>
+                    <a class="btn btn--secondary" href="#" data-modal-open="edit-person">Open the dialog</a>
+                </div>
+            </section>
+
+            <section class="pv-section" aria-labelledby="badges-title" lang="en">
+                <h2 id="badges-title">Badges</h2>
+                <div class="pv-row">
+                    <span class="badge badge--success">Active</span>
+                    <span class="badge badge--warning">Pending</span>
+                    <span class="badge badge--danger">Blocked</span>
+                    <span class="badge badge--info">Invited</span>
+                    <span class="badge badge--neutral">Archived</span>
+                </div>
+            </section>
+
+            <section class="pv-section" aria-labelledby="flashes-title" lang="en">
+                <h2 id="flashes-title">Flashes</h2>
+                <p class="flash flash--success" role="status">Saved. <a href="#">Undo</a></p>
+                <p class="flash flash--warning" role="status">The invitation expires tomorrow.</p>
+                <p class="flash flash--error" role="alert">The record could not be saved.</p>
+                <p class="flash flash--info" role="status">An import is running.</p>
+                <p class="flash" role="status">A neutral message.</p>
+            </section>
+
+            <section class="pv-section" aria-labelledby="avatars-title" lang="en">
+                <h2 id="avatars-title">Avatars</h2>
+                <div class="pv-row">
+                    <span class="avatar avatar--small" aria-hidden="true">EL</span>
+                    <span class="avatar" aria-hidden="true">EL</span>
+                    <span class="avatar avatar--large" aria-hidden="true">EL</span>
+                    <span>Elsa Lundqvist</span>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<dialog class="modal" id="edit-person" aria-labelledby="edit-person-title">
+    <form method="dialog">
+        <div class="modal__header">
+            <h2 id="edit-person-title">Editar ficha</h2>
+            <button type="button" class="btn btn--secondary btn--small" data-modal-close>Cerrar</button>
+        </div>
+        <div class="modal__body">
+            <label for="edit-name">Nombre</label>
+            <input id="edit-name" name="name" value="Elsa Lundqvist" autofocus>
+            <label for="edit-email">Email</label>
+            <input id="edit-email" name="email" type="email" value="elsa@example.com">
+            <label for="edit-role">Rol</label>
+            <select id="edit-role" name="role"><option>Gerencia</option><option>Empleado</option></select>
+        </div>
+        <div class="modal__actions">
+            <button type="button" class="btn btn--secondary" data-modal-close>Cancelar</button>
+            <button class="btn btn--primary">Guardar</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog class="modal modal--confirm" id="confirm-delete" role="alertdialog"
+        aria-labelledby="confirm-delete-title" aria-describedby="confirm-delete-text">
+    <div class="modal__header">
+        <h2 id="confirm-delete-title">¿Eliminar este fichaje?</h2>
+    </div>
+    <div class="modal__body">
+        <p id="confirm-delete-text">El fichaje del jueves 19 desaparece del registro de Elsa. Queda en el historial de cambios.</p>
+    </div>
+    <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" data-modal-close autofocus>Cancelar</button>
+        <button type="button" class="btn btn--danger" data-modal-confirm>Eliminar</button>
+    </div>
+</dialog>
+
+<script>
+    // Preview controls: the warm teal layer on or off, and the density.
+    (function () {
+        var params = new URLSearchParams(location.search);
+        var warm = document.getElementById('warm-teal');
+        var theme = document.getElementById('pv-theme');
+        var density = document.getElementById('pv-density');
+
+        function apply() {
+            warm.disabled = theme.value !== 'warm';
+            if (density.value === 'compact') {
+                document.documentElement.setAttribute('data-density', 'compact');
+            } else {
+                document.documentElement.removeAttribute('data-density');
+            }
+        }
+
+        if (params.get('theme') === 'defaults') {
+            theme.value = 'defaults';
+        }
+        if (params.get('density') === 'compact') {
+            density.value = 'compact';
+        }
+        theme.addEventListener('change', apply);
+        density.addEventListener('change', apply);
+        apply();
+
+        var opened = params.get('open') ? document.getElementById(params.get('open')) : null;
+        if (opened && typeof opened.showModal === 'function') {
+            opened.showModal();
+        }
+    })();
+</script>
+</body>
+</html>

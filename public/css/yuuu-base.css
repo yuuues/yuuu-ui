@@ -544,8 +544,11 @@ fieldset {
  * 7. Tables
  * ------------------------------------------------------------------- */
 
-/* Scrolls sideways instead of overflowing the page on narrow screens. */
+/* Scrolls sideways instead of overflowing the page on narrow screens.
+   Positioned, so that it also clips a .visually-hidden header inside it
+   (absolute, it would otherwise widen the page beyond the scroll area). */
 .table-wrap {
+    position: relative;
     margin: 0 0 var(--yuuu-space-4);
     overflow-x: auto;
 }
@@ -1045,6 +1048,12 @@ fieldset {
     min-width: 0;
 }
 
+/* A grid item with auto side margins shrinks to its content: the .page
+   beside the menu takes the column, up to its max width, instead. */
+.app-shell > .page {
+    width: 100%;
+}
+
 .side-nav {
     display: flex;
     align-self: stretch;
@@ -1240,10 +1249,12 @@ fieldset {
     line-height: 1.2;
 }
 
-/* A <dl> of label and value pairs, in two columns. */
+/* A <dl> of label and value pairs, in two columns. The label column is
+   as wide as its longest label, up to 14rem: a fixed width would leave
+   the values no room in a narrow card. */
 .data-list {
     display: grid;
-    grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr);
+    grid-template-columns: fit-content(14rem) minmax(0, 1fr);
     gap: var(--yuuu-space-3) var(--yuuu-space-4);
     margin: 0 0 var(--yuuu-space-4);
 }
