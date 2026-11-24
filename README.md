@@ -110,7 +110,7 @@ Everything app-specific goes in the app's own stylesheet, linked after the base.
 ```css
 /* public/css/app.css (the CRM) */
 :root {
-    --yuuu-color-primary: #4055ff;
+    --yuuu-color-primary: #1b34ff;
     --yuuu-color-primary-text: #ffffff;
 }
 ```
@@ -969,12 +969,22 @@ Link back to a URL the app builds, not to the `Referer` header. The status is **
 [Semantic versioning](https://semver.org/), with git tags `vX.Y.Z`. Before 1.0, a **minor** version (0.1 → 0.2) may break: renaming or removing a class or token, or changing what a class looks like in a way a layout depends on. A **patch** (0.1.0 → 0.1.1) only fixes, without renaming anything. Require it with a caret:
 
 ```json
-"yuuues/yuuu-ui": "^0.4"
+"yuuues/yuuu-ui": "^0.5"
 ```
 
 JavaScript apps pin an exact git tag instead (§12). A release bumps the version in `package.json`, the `branch-alias` of `composer.json` and the install command of §12 together: `PackageJsonTest` fails while they disagree.
 
 Every class and token documented here is public API, and so are the two Twig functions, the `data-` attributes of the script and the blocks of the error page. Everything else in the files is not.
+
+### What changed in 0.5
+
+Every 0.4.0 rule and token is unchanged: `CompatibilityTest` guards them, so an app can move from `^0.4` to `^0.5` without touching its CSS. One deliberate addition to a 0.4 class: `.table-wrap` gains `position: relative`, so a visually-hidden header cell cannot widen phone pages.
+
+- **Pragmatic AAA policy, enforced by tests** (§7): reading text 7:1, secondary text 4.5:1 (muted text included), non-text 3:1. A brand override must meet it: the old CRM example `#4055ff` no longer passes as a primary with white text; `#1b34ff` does (§4).
+- **Accent family tokens**: `accent-ink` and `accent-soft`, with an override contract for an app's own accent (§4).
+- **New components**: app shell and side menu, tabs, avatar, stat, data list, card action, and a compact density that applies to fine pointers only (§5).
+- **Tailwind v4 entry point**, `@yuuues/yuuu-ui/tailwind.css`: four lines of import that skip Tailwind's preflight (§12, *Tailwind*).
+- **Preview page** (`docs/preview/index.html`) and a worked example, warm teal (`docs/preview/warm-teal.css`; §4).
 
 ## 11. Development
 
@@ -1014,12 +1024,12 @@ The same CSS, imported instead of linked: Vite bundles it with the app, and a si
 From the git tag, with no registry and no credentials (the repository is public):
 
 ```bash
-npm i github:yuuues/yuuu-ui#v0.4.0
+npm i github:yuuues/yuuu-ui#v0.5.0
 # or
-pnpm add github:yuuues/yuuu-ui#v0.4.0
+pnpm add github:yuuues/yuuu-ui#v0.5.0
 ```
 
-`package.json` gets `"@yuuues/yuuu-ui": "github:yuuues/yuuu-ui#v0.4.0"` and the lockfile pins the commit. The package ships the two CSS files (plus its README, LICENSE and `package.json`), and **nothing runs on install**: the CSS is committed, built, so it works with `ignore-scripts=true`. Both npm and pnpm need **`git`** on the machine to resolve the tag; slim images such as `node:22-alpine` lack it (`apk add git`).
+`package.json` gets `"@yuuues/yuuu-ui": "github:yuuues/yuuu-ui#v0.5.0"` and the lockfile pins the commit. The package ships the two CSS files (plus its README, LICENSE and `package.json`), and **nothing runs on install**: the CSS is committed, built, so it works with `ignore-scripts=true`. Both npm and pnpm need **`git`** on the machine to resolve the tag; slim images such as `node:22-alpine` lack it (`apk add git`).
 
 The package is `private`: it is never published to a registry, the git tag is the release.
 
@@ -1072,7 +1082,7 @@ Exactly as in §4, in the app's own CSS **imported after** yuuu-ui (Vite keeps t
 ```css
 /* src/app.css */
 :root {
-    --yuuu-color-primary: #4055ff;
+    --yuuu-color-primary: #1b34ff;
     --yuuu-color-primary-text: #ffffff;
 }
 
