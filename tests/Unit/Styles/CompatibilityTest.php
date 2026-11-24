@@ -88,7 +88,7 @@ final class CompatibilityTest extends TestCase
 
     /**
      * Rules and declarations of a stylesheet without comments, as
-     * "context selector" => [property => value], whitespace normalised.
+     * "context > selector" => [property => value], whitespace normalised.
      * Rules repeated in the same context are merged, the last declaration
      * of a property winning, as in the cascade.
      *

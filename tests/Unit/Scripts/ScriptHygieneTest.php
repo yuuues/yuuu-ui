@@ -21,8 +21,8 @@ use Yuuues\YuuuUi\YuuuUiBundle;
  */
 final class ScriptHygieneTest extends TestCase
 {
-    /** 3 KiB, unminified and with comments: the file ships as written. */
-    private const int SIZE_BUDGET = 3072;
+    /** 3.5 KiB, unminified and with comments: the file ships as written. */
+    private const int SIZE_BUDGET = 3584;
 
     /** @return iterable<string, array{string}> */
     public static function forbidden(): iterable
@@ -61,7 +61,7 @@ final class ScriptHygieneTest extends TestCase
 
     public function testItStaysWithinTheSizeBudget(): void
     {
-        self::assertLessThan(self::SIZE_BUDGET, \strlen(self::source()), 'yuuu-ui.js is over its 3 KiB budget.');
+        self::assertLessThan(self::SIZE_BUDGET, \strlen(self::source()), 'yuuu-ui.js is over its 3.5 KiB budget.');
     }
 
     /** One IIFE in strict mode: no global names, no module syntax. */

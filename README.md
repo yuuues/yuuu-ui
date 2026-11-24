@@ -6,7 +6,7 @@ The shared base stylesheet of the **yuuu** suite, shipped as a Symfony bundle: y
 - **Neutral** by design. Each app brings its personality through six brand tokens (§4).
 - **Pragmatic AAA, tested** in light *and* dark mode (§7): reading text reaches **7:1 (AAA)**, secondary text (muted metadata, hovered and pressed buttons) **4.5:1 (AA)**, control outlines, the focus ring and markers **3:1**. An app checks its own brand override against the same tiers with the shipped `Contrast` class (§4).
 - **No external resources**: no web fonts, no CDN, no remote `url()`, and no `@import` in `yuuu-base.css` or `tokens.css` (only `tailwind.css`, the Tailwind entry point of §12, imports the base). Works under CSP `style-src 'self'`, with no inline styles needed.
-- An optional script, `yuuu-ui.js` (under 3 KiB, no dependencies), that opens forms and confirmations in native `<dialog>` modals and scrolls the current side-menu link or tab into view in its row. **Progressive enhancement**: without it, links navigate and forms submit, and nothing breaks. Works under CSP `script-src 'self'`.
+- An optional script, `yuuu-ui.js` (under 3.5 KiB, no dependencies), that opens forms and confirmations in native `<dialog>` modals and scrolls the current side-menu link or tab into view in its row. **Progressive enhancement**: without it, links navigate and forms submit, and nothing breaks. Works under CSP `script-src 'self'`.
 - An error page, `@YuuuUi/error.html.twig`, on the card layout, for the app's 403/404/500 pages and a "page expired" case.
 - Two Twig functions, `yuuu_ui_stylesheet()` and `yuuu_ui_script()`, that link the files with a content fingerprint for cache busting, computed once when the container is compiled.
 - An npm package, `@yuuues/yuuu-ui`, installed from a git tag (no registry), so JavaScript apps built with Vite can **import** the CSS, inlined into a single HTML file if they need to; see §12.
@@ -197,7 +197,7 @@ final class BrandContrastTest extends TestCase
 }
 ```
 
-Only `#rrggbb` values are read; a token set any other way (`rgb()`, a name, `var()`) keeps the base's value in the check.
+`colors()` reads the `--yuuu-color-*` tokens of a top-level `:root` rule (both schemes) and of a `:root` inside any `@media` whose condition has `prefers-color-scheme: dark` (dark only), in source order. A value must be `#rrggbb` or `#rgb`, `!important` allowed. Anything it cannot check fails loudly instead of falling back to the base's value: a token written as `rgb()`, `var()`, a colour name or with alpha, or declared anywhere else (`:root` inside `@layer` or another media query, `:root, [data-theme]`), throws an exception that names the token and the value or the rule.
 
 ### Worked example: warm teal
 
@@ -907,7 +907,7 @@ Also: a visible focus ring everywhere (`:focus-visible`), button borders in forc
 
 The stylesheet loads nothing: no fonts, no images, no `@import`. `tests/Unit/Styles/StylesheetHygieneTest.php` fails the build if a remote `url()`, an `@import` or an `@font-face` appears, or if `!important` shows up anywhere other than `[hidden]` and the reduced-motion reset.
 
-The script loads nothing either, and needs nothing relaxed: it is a file from the app's own origin (no inline `<script>`), attaches its listeners with `addEventListener` (no `onclick=` attributes), never evaluates strings (no `'unsafe-eval'`), never parses HTML and never writes a `style`. `tests/Unit/Scripts/ScriptHygieneTest.php` fails the build if `eval`, `new Function`, `innerHTML` and friends, `.style`, an `on*` handler, a URL, a network call or a global appears, or if the file grows past 3 KiB.
+The script loads nothing either, and needs nothing relaxed: it is a file from the app's own origin (no inline `<script>`), attaches its listeners with `addEventListener` (no `onclick=` attributes), never evaluates strings (no `'unsafe-eval'`), never parses HTML and never writes a `style`. `tests/Unit/Scripts/ScriptHygieneTest.php` fails the build if `eval`, `new Function`, `innerHTML` and friends, `.style`, an `on*` handler, a URL, a network call or a global appears, or if the file grows past 3.5 KiB.
 
 An app using the base and the script needs:
 
@@ -1014,7 +1014,7 @@ Every 0.4.0 rule and token is unchanged: `CompatibilityTest` guards them, so an 
 - **Tailwind v4 entry point**, `@yuuues/yuuu-ui/tailwind.css`: four lines of import that skip Tailwind's preflight (§12, *Tailwind*).
 - **Preview page** (`docs/preview/index.html`) and a worked example, warm teal (`docs/preview/warm-teal.css`; §4).
 - **`Yuuues\YuuuUi\Contrast`**, a shipped PHP class with the pairs of every tier and the maths (WCAG ratio, the button filters, the light and dark token values of stylesheets laid over each other): an app's PHPUnit test checks its brand override with it (§4). The bundle's own contrast test uses it too.
-- **`yuuu-ui.js` scrolls the current side-menu link or tab into view** inside its row on narrow screens; only the row scrolls, never the page (§5).
+- **`yuuu-ui.js` scrolls the current side-menu link or tab into view** inside its row on narrow screens; only the row scrolls, never the page (§5). Its size budget goes from 3 KiB to 3.5 KiB.
 
 ## 11. Development
 
@@ -1025,7 +1025,7 @@ docker run --rm -v "$PWD":/app -w /app darkkyto/yuuu-app-ci-php:8.4-1 bin/verify
 
 On Git Bash for Windows, prefix both with `MSYS_NO_PATHCONV=1`.
 
-`bin/verify` is the gate of the bundle, the same one CI runs: php-cs-fixer, PHPStan level 8, and PHPUnit (unit and functional suites). A new class in the stylesheet needs its entry in §5, or the suite fails. A new colour pair needs its line in `src/Contrast.php`. A new `data-` attribute in the script needs its line in the table of *Dialogs*, and the script must stay under 3 KiB.
+`bin/verify` is the gate of the bundle, the same one CI runs: php-cs-fixer, PHPStan level 8, and PHPUnit (unit and functional suites). A new class in the stylesheet needs its entry in §5, or the suite fails. A new colour pair needs its line in `src/Contrast.php`. A new `data-` attribute in the script needs its line in the table of *Dialogs*, and the script must stay under 3.5 KiB.
 
 PHPUnit cannot click a dialog: the script's behaviour is checked by hand in a browser (open from a link, Escape, backdrop, Cancel, confirm submits the original form with its button, focus back on the trigger, and nothing intercepted without the script; at phone width, the preview's late current link, «Quiosco», is in view in the side-menu row and the page is not scrolled). `ScriptHygieneTest` guards what can be read from the source.
 

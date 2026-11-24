@@ -51,6 +51,9 @@ final class StylesheetContrastTest extends TestCase
         '--yuuu-color-text-muted',
     ];
 
+    /** @var list<string> temporary override files of the current test */
+    private array $overrides = [];
+
     /** @return iterable<string, array{string}> */
     public static function modes(): iterable
     {
@@ -87,13 +90,67 @@ final class StylesheetContrastTest extends TestCase
     /** A failure names the pair, the ratio and the minimum. */
     public function testAFailureIsReported(): void
     {
-        $colors = Contrast::colors('light', YuuuUiBundle::stylesheetPath());
-        $colors['--yuuu-color-text-muted'] = '#999999';
+        $colors = Contrast::colors('light', YuuuUiBundle::stylesheetPath(), $this->override(":root {\n    --yuuu-color-text-muted: #999999;\n}\n"));
 
         self::assertSame([
             '--yuuu-color-text-muted on --yuuu-color-bg: 2.63:1 (needs 4.5)',
             '--yuuu-color-text-muted on --yuuu-color-surface: 2.85:1 (needs 4.5)',
         ], Contrast::failures($colors));
+    }
+
+    /**
+     * An app's override that Contrast can read: the token's value is the
+     * one the browser would use in that mode.
+     *
+     * @return iterable<string, array{string, string}>
+     */
+    public static function readableOverrides(): iterable
+    {
+        yield '#rrggbb' => ['light', ':root { --yuuu-color-text-muted: #999999; }'];
+        yield 'last declaration without ;' => ['light', ":root {\n    --yuuu-color-bg: #ffffff;\n    --yuuu-color-text-muted: #999999\n}"];
+        yield '!important' => ['light', ':root { --yuuu-color-text-muted: #999999 !important; }'];
+        yield '#rgb' => ['light', ':root { --yuuu-color-text-muted: #999; }'];
+        yield 'uppercase' => ['light', ':root { --yuuu-color-text-muted: #999999 !IMPORTANT; }'];
+        yield 'a second :root' => ['light', ":root { --yuuu-color-text: #111111; }\n:root { --yuuu-color-text-muted: #999999; }"];
+        yield 'dark block' => ['dark', '@media (prefers-color-scheme: dark) { :root { --yuuu-color-text-muted: #999999; } }'];
+        yield 'dark block with a media type' => ['dark', '@media screen and (prefers-color-scheme:dark){:root{--yuuu-color-text-muted:#999999}}'];
+        yield 'light :root after the dark block wins in dark' => ['dark', "@media (prefers-color-scheme: dark) { :root { --yuuu-color-text-muted: #222222; } }\n:root { --yuuu-color-text-muted: #999999; }"];
+    }
+
+    #[DataProvider('readableOverrides')]
+    public function testAReadableOverrideIsRead(string $mode, string $css): void
+    {
+        $colors = Contrast::colors($mode, YuuuUiBundle::stylesheetPath(), $this->override($css));
+
+        self::assertSame('#999999', $colors['--yuuu-color-text-muted']);
+    }
+
+    /**
+     * An override Contrast cannot read must fail loudly, never fall back
+     * to the base value and pass.
+     *
+     * @return iterable<string, array{string, string}>
+     */
+    public static function unreadableOverrides(): iterable
+    {
+        yield 'rgb()' => [':root { --yuuu-color-text-muted: rgb(153 153 153); }', 'rgb(153 153 153)'];
+        yield 'var()' => [':root { --yuuu-color-text-muted: var(--grey); }', 'var(--grey)'];
+        yield 'named colour' => [':root { --yuuu-color-text-muted: grey; }', '"grey"'];
+        yield '#rrggbbaa' => [':root { --yuuu-color-text-muted: #99999980; }', '#99999980'];
+        yield 'rgb() in the dark block' => ['@media (prefers-color-scheme: dark) { :root { --yuuu-color-text-muted: rgb(153 153 153); } }', 'rgb(153 153 153)'];
+        yield ':root inside @layer' => ['@layer brand { :root { --yuuu-color-text-muted: #999999; } }', '@layer brand > :root'];
+        yield ':root with another selector' => [':root, [data-theme] { --yuuu-color-text-muted: #999999; }', ':root, [data-theme]'];
+        yield 'another media query' => ['@media (min-width: 40rem) { :root { --yuuu-color-text-muted: #999999; } }', '@media (min-width: 40rem) > :root'];
+        yield 'a light media query' => ['@media (prefers-color-scheme: light) { :root { --yuuu-color-text-muted: #999999; } }', 'prefers-color-scheme: light'];
+    }
+
+    #[DataProvider('unreadableOverrides')]
+    public function testAnUnreadableOverrideFailsLoudly(string $css, string $reported): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/--yuuu-color-text-muted.*'.preg_quote($reported, '/').'/');
+
+        Contrast::colors('dark', YuuuUiBundle::stylesheetPath(), $this->override($css));
     }
 
     public function testAnUnknownModeIsRejected(): void
@@ -156,5 +213,27 @@ final class StylesheetContrastTest extends TestCase
         self::assertEqualsWithDelta(4.48, Contrast::ratio('#777777', '#ffffff'), 0.01);
         self::assertSame('#d9d9d9', Contrast::brightness('#ffffff', 0.85));
         self::assertSame('#000000', Contrast::brightness('#000000', 0.5));
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->overrides as $path) {
+            unlink($path);
+        }
+
+        $this->overrides = [];
+    }
+
+    /** An app's override, written to a temporary file removed after the test. */
+    private function override(string $css): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'yuuu-ui-override-');
+        if (false === $path || false === file_put_contents($path, $css)) {
+            throw new \RuntimeException('Cannot write a temporary stylesheet.');
+        }
+
+        $this->overrides[] = $path;
+
+        return $path;
     }
 }

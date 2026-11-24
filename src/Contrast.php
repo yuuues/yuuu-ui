@@ -129,11 +129,17 @@ final class Contrast
     ];
 
     /**
-     * The `#rrggbb` tokens of one colour scheme, `light` or `dark`, of
-     * stylesheets linked in this order (the base first, then the app's
-     * layer). Each file's light `:root` applies in both schemes and its
-     * `@media (prefers-color-scheme: dark) { :root { ... } }` in dark
-     * only, exactly as the browser cascades them.
+     * The `--yuuu-color-*` tokens of one colour scheme, `light` or `dark`,
+     * as `#rrggbb`, of stylesheets linked in this order (the base first,
+     * then the app's layer). A top-level `:root` rule applies in both
+     * schemes, a `:root` inside an `@media` whose condition has
+     * `prefers-color-scheme: dark` in dark only; declarations are applied
+     * in source order, as the browser cascades them.
+     *
+     * Fails loudly rather than check the wrong value: a `--yuuu-color-*`
+     * token anywhere else (another selector, `@layer`, another media
+     * query), or with a value other than `#rrggbb` or `#rgb` (optionally
+     * `!important`), throws.
      *
      * @return array<string, string>
      */
@@ -150,14 +156,16 @@ final class Contrast
                 throw new \RuntimeException('Cannot read the stylesheet: '.$path);
             }
 
-            $code = (string) preg_replace('#/\*.*?\*/#s', '', $css);
-            $light = self::tokens('/^:root\s*\{([^}]*)\}/m', $code);
-            $dark = self::tokens('/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{([^}]*)\}/', $code);
-            if ([] === $light && [] === $dark) {
-                throw new \RuntimeException('No #rrggbb colour token found in '.$path);
+            $declarations = self::declarations((string) preg_replace('#/\*.*?\*/#s', '', $css), $path);
+            if ([] === $declarations) {
+                throw new \RuntimeException('No --yuuu-color-* token found in '.$path);
             }
 
-            $colors = array_merge($colors, $light, 'dark' === $mode ? $dark : []);
+            foreach ($declarations as [$scheme, $token, $value]) {
+                if ('light' === $scheme || 'dark' === $mode) {
+                    $colors[$token] = $value;
+                }
+            }
         }
 
         return $colors;
@@ -248,20 +256,71 @@ final class Contrast
         return $colors[$token] ?? throw new \InvalidArgumentException(\sprintf('No #rrggbb value for %s.', $token));
     }
 
-    /** @return array<string, string> */
-    private static function tokens(string $blockPattern, string $code): array
+    /**
+     * Every `--yuuu-color-*` declaration of a stylesheet without comments,
+     * in source order, with the scheme it applies to. A small brace
+     * scanner: enough for token blocks (no `{`, `}` or `;` inside strings
+     * of the rules that hold them).
+     *
+     * @return list<array{string, string, string}> scheme, token, #rrggbb
+     */
+    private static function declarations(string $code, string $path): array
     {
-        if (1 !== preg_match($blockPattern, $code, $block)) {
-            return [];
+        $found = [];
+        $preludes = [];
+        $buffer = '';
+        foreach (str_split($code) as $char) {
+            if ('{' === $char) {
+                $preludes[] = (string) preg_replace('/\s+/', ' ', trim($buffer));
+                $buffer = '';
+                continue;
+            }
+
+            if ('}' !== $char && ';' !== $char) {
+                $buffer .= $char;
+                continue;
+            }
+
+            // A declaration ends at `;`, or at the `}` of its block.
+            if (1 === preg_match('/^\s*(--yuuu-color-[a-z0-9-]+)\s*:\s*(.*?)\s*$/s', $buffer, $declaration)) {
+                $found[] = [self::scheme($preludes, $declaration[1], $path), $declaration[1], self::hex($declaration[1], $declaration[2], $path)];
+            }
+
+            $buffer = '';
+            if ('}' === $char) {
+                array_pop($preludes);
+            }
         }
 
-        preg_match_all('/(--[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{6})\s*;/', $block[1], $pairs, \PREG_SET_ORDER);
+        return $found;
+    }
 
-        $colors = [];
-        foreach ($pairs as $pair) {
-            $colors[$pair[1]] = strtolower($pair[2]);
+    /** @param list<string> $preludes the enclosing rules, outermost first */
+    private static function scheme(array $preludes, string $token, string $path): string
+    {
+        if ([':root'] === $preludes) {
+            return 'light';
         }
 
-        return $colors;
+        if (2 === \count($preludes) && ':root' === $preludes[1] && 1 === preg_match('/^@media\b.*\(\s*prefers-color-scheme\s*:\s*dark\s*\)/i', $preludes[0])) {
+            return 'dark';
+        }
+
+        throw new \InvalidArgumentException(\sprintf('%s is declared in "%s" in %s: only a top-level :root, or a :root inside @media (prefers-color-scheme: dark), is read.', $token, implode(' > ', $preludes), $path));
+    }
+
+    /** The value as `#rrggbb`, from `#rrggbb` or `#rgb`, `!important` allowed. */
+    private static function hex(string $token, string $value, string $path): string
+    {
+        $hex = (string) preg_replace('/\s*!\s*important$/i', '', $value);
+        if (1 === preg_match('/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i', $hex, $short)) {
+            $hex = '#'.$short[1].$short[1].$short[2].$short[2].$short[3].$short[3];
+        }
+
+        if (1 !== preg_match('/^#[0-9a-f]{6}$/i', $hex)) {
+            throw new \InvalidArgumentException(\sprintf('%s: "%s" in %s is not a #rrggbb or #rgb colour, so its contrast cannot be checked.', $token, $value, $path));
+        }
+
+        return strtolower($hex);
     }
 }
