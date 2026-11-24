@@ -24,7 +24,7 @@ final class CompatibilityTest extends TestCase
     private const string DARK = '@media (prefers-color-scheme: dark)';
 
     /**
-     * Rules allowed to differ from 0.4.0, as "context selector" => reason.
+     * Rules allowed to differ from 0.4.0, as "context > selector" => reason.
      * The context is the enclosing at-rule chain joined with " > "; the
      * key is "selector" alone when the rule is top level.
      *

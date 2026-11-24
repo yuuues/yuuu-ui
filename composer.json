@@ -1,6 +1,6 @@
 {
     "name": "yuuues/yuuu-ui",
-    "description": "Shared base stylesheet, dialog script and error page of the yuuu suite, shipped as a Symfony bundle: design tokens, dark mode, WCAG AA contrast (AAA targeted), progressive enhancement, no external resources",
+    "description": "Shared base stylesheet, dialog script and error page of the yuuu suite, shipped as a Symfony bundle: design tokens, dark mode, tested contrast tiers (AAA 7:1 for reading text, AA 4.5:1 for secondary text, 3:1 for non-text), progressive enhancement, no external resources",
     "type": "symfony-bundle",
     "license": "MIT",
     "minimum-stability": "stable",

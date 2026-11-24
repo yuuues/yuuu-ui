@@ -2,9 +2,10 @@
  * yuuu-ui: the shared base stylesheet of the yuuu suite.
  *
  * NEUTRAL design on purpose. The personality comes from each app through
- * four brand tokens (--yuuu-color-primary, --yuuu-color-primary-text,
- * --yuuu-color-accent, --yuuu-color-accent-text), overridden in the app's
- * own stylesheet linked AFTER this one.
+ * six brand tokens (--yuuu-color-primary, --yuuu-color-primary-text,
+ * --yuuu-color-accent, --yuuu-color-accent-text, --yuuu-color-accent-ink,
+ * --yuuu-color-accent-soft), overridden in the app's own stylesheet
+ * linked AFTER this one (README §4, the override contract).
  *
  * The brand colour is only used where contrast is guaranteed: the
  * background of the primary button (with its own text token), and
@@ -18,11 +19,11 @@
  * CSP: no inline styles and no external resources (no web fonts, no CDN,
  * no remote url()). The typeface is the system one. Every pair of colour
  * tokens that is painted together is checked, in light and in dark mode,
- * by tests/Unit/Styles/StylesheetContrastTest.php. WCAG AA is required
- * (4.5:1 for text, also under the hover and pressed filters of .btn; 3:1
- * for control outlines and the focus ring). WCAG AAA (7:1 for text) is
- * the target for the default values wherever it does not spoil the look:
- * today every text pair at rest reaches it.
+ * by tests/Unit/Styles/StylesheetContrastTest.php, through the pairs of
+ * src/Contrast.php, at the tiers of README §7: reading text 7:1 (WCAG
+ * AAA), secondary text 4.5:1 (AA: muted metadata, and text under the
+ * hover and pressed filters of .btn), non-text 3:1 (control outlines,
+ * the focus ring, markers).
  *
  * Section 1 is parsed by that test: keep one declaration per line, colours
  * as #rrggbb, and the dark block as `@media (prefers-color-scheme: dark)

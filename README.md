@@ -3,9 +3,9 @@
 The shared base stylesheet of the **yuuu** suite, shipped as a Symfony bundle: yuuuID's screens and operator panel, the yuuu CRM back-office, and every new app started from the skeleton look the same and stay accessible without copying CSS around.
 
 - One file, `yuuu-base.css`: design tokens as CSS custom properties, a small set of BEM-light classes, automatic dark mode. The tokens alone, `tokens.css`, are generated from it for apps that bring their own rules.
-- **Neutral** by design. Each app brings its personality through four brand tokens.
-- **WCAG AA required, AAA targeted.** Tested in light *and* dark mode: every text pair reaches 4.5:1 (AA), control outlines 3:1. Every default text pair at rest also reaches **7:1 (AAA)**; see §7.
-- **No external resources**: no web fonts, no CDN, no remote `url()`, no `@import`. Works under CSP `style-src 'self'`, with no inline styles needed.
+- **Neutral** by design. Each app brings its personality through six brand tokens (§4).
+- **Pragmatic AAA, tested** in light *and* dark mode (§7): reading text reaches **7:1 (AAA)**, secondary text (muted metadata, hovered and pressed buttons) **4.5:1 (AA)**, control outlines, the focus ring and markers **3:1**. An app checks its own brand override against the same tiers with the shipped `Contrast` class (§4).
+- **No external resources**: no web fonts, no CDN, no remote `url()`, and no `@import` in `yuuu-base.css` or `tokens.css` (only `tailwind.css`, the Tailwind entry point of §12, imports the base). Works under CSP `style-src 'self'`, with no inline styles needed.
 - An optional script, `yuuu-ui.js` (under 3 KiB, no dependencies), that opens forms and confirmations in native `<dialog>` modals and scrolls the current side-menu link or tab into view in its row. **Progressive enhancement**: without it, links navigate and forms submit, and nothing breaks. Works under CSP `script-src 'self'`.
 - An error page, `@YuuuUi/error.html.twig`, on the card layout, for the app's 403/404/500 pages and a "page expired" case.
 - Two Twig functions, `yuuu_ui_stylesheet()` and `yuuu_ui_script()`, that link the files with a content fingerprint for cache busting, computed once when the container is compiled.
@@ -136,8 +136,8 @@ To use different values in dark mode, add your own dark block after it:
 | `--yuuu-color-primary-text` | `#ffffff` | `#111111` | Text on the primary colour |
 | `--yuuu-color-accent` | `#4e545e` | `#a0a7b1` | The stripe on top of `.card` |
 | `--yuuu-color-accent-text` | `#ffffff` | `#111111` | Text on the accent colour (for the app's own use) |
-| `--yuuu-color-accent-ink` | `#1b1f24` | `#e8eaed` | The accent as text, or as a marker, on `bg` and `surface` (for the app's own use) |
-| `--yuuu-color-accent-soft` | `#f2f4f7` | `#22262d` | A tinted background that carries `accent-ink` text (for the app's own use) |
+| `--yuuu-color-accent-ink` | `#1b1f24` | `#e8eaed` | The accent as text, or as a marker, on `bg`, `surface` and `accent-soft`: the current `.side-nav__link` and its bar, the open tab's underline, the `.avatar` initials, and the app's own use |
+| `--yuuu-color-accent-soft` | `#f2f4f7` | `#22262d` | A tinted background that carries `accent-ink` text: the current `.side-nav__link`, the `.avatar`, and the app's own use |
 
 **You answer for the contrast of your own pairs.** The base tests its defaults; it cannot test yours. A button label is read to work, so text on the primary colour (and on the accent colour) must reach the **reading tier, 7:1** (WCAG 1.4.6): the same rule as the override contract below and §7. Pick the text colour with the WCAG relative luminance, as yuuuID does for each company's colours: white or near-black (`#111111`), whichever contrasts more, and then check that the winner reaches 7:1. A mid-tone often cannot: for the CRM, `#ffffff` on `#4055ff` gives **5.30:1**, which is AA but not the reading tier, and black gives only 3.96:1. The CRM has to darken its blue (next section).
 
@@ -170,10 +170,34 @@ These are the tokens an app may redefine in its own layer. Everything else (stat
 | Group | Tokens | Pairs the override must still meet |
 |---|---|---|
 | Accent | `primary`, `primary-text`, `accent`, `accent-text`, `accent-ink`, `accent-soft` | Reading, **7:1**: `primary-text` on `primary`, `accent-text` on `accent`, `accent-ink` on `bg`, on `surface` and on `accent-soft`. Non-text, **3:1**: `accent-ink` on `surface` as a marker. |
-| Neutral tint | `bg`, `surface`, `border`, `border-strong`, `text`, `text-muted` | Reading, **7:1**: `text` on `bg` and on `surface`, and on every status background and on `accent-soft`. Secondary, **4.5:1**: `text-muted` on `bg` and on `surface`. Non-text, **3:1**: `border-strong` on `bg` and on `surface`. `border` is decorative. |
+| Neutral tint | `bg`, `surface`, `border`, `border-strong`, `text`, `text-muted` | Reading, **7:1**: `text` on `bg` and on `surface`, and on every status background and on `accent-soft`; `danger-text` on `bg` and on `surface` (`.field-error`). Secondary, **4.5:1**: `text-muted` on `bg` and on `surface`; `text` dimmed by the pressed `.btn--secondary`, `brightness(0.85)`, on `bg` and on `surface`. Non-text, **3:1**: `border-strong`, `danger-text`, `danger-solid` and `text` (the focus ring) on `bg` and on `surface`. `border` is decorative. |
 | Shape | `radius-1`, `radius-2`, `shadow` | No contrast pair. The shadow must not be the only edge of a control: its outline is `border-strong`. |
 
-Secondary text (4.5:1) is the tier for muted metadata (`text-muted` on `bg` and on `surface`) and the hovered or pressed states of buttons. An app's own test can reuse the lists through `StylesheetContrastTest::pairsFor('reading' | 'secondary' | 'control')`.
+Secondary text (4.5:1) is the tier for muted metadata (`text-muted` on `bg` and on `surface`) and the hovered or pressed states of buttons. The table names the pairs a group touches; the complete list, every pair of every tier, is in the shipped class `Yuuues\YuuuUi\Contrast` (`READING_PAIRS`, `SECONDARY_PAIRS`, `FILTERED_PAIRS`, `CONTROL_PAIRS`).
+
+**Test your override with it.** `Contrast::colors()` reads the `#rrggbb` tokens of stylesheets laid over each other as the browser cascades them (each file's light `:root`, then in dark mode its `prefers-color-scheme: dark` block), and `Contrast::failures()` checks every pair of every tier, the button filters included, and lists the ones that miss:
+
+```php
+// tests/BrandContrastTest.php (in the app)
+use PHPUnit\Framework\Attributes\TestWith;
+use PHPUnit\Framework\TestCase;
+use Yuuues\YuuuUi\Contrast;
+use Yuuues\YuuuUi\YuuuUiBundle;
+
+final class BrandContrastTest extends TestCase
+{
+    #[TestWith(['light'])]
+    #[TestWith(['dark'])]
+    public function testTheBrandMeetsTheTiers(string $mode): void
+    {
+        $colors = Contrast::colors($mode, YuuuUiBundle::stylesheetPath(), __DIR__.'/../public/css/app.css');
+
+        self::assertSame([], Contrast::failures($colors));
+    }
+}
+```
+
+Only `#rrggbb` values are read; a token set any other way (`rgb()`, a name, `var()`) keeps the base's value in the check.
 
 ### Worked example: warm teal
 
@@ -441,11 +465,11 @@ Accessibility: a real description list, so the pairing is announced; long values
 
 #### Recommended patterns: a person header, a row of figures
 
-Two layouts the base leaves to the app: a few lines in its own layer, with its own prefix. The preview page (`docs/preview/index.html`) uses them with the `pv-` prefix.
+Two layouts the base leaves to the app: a few lines in its own layer, with its own prefix (here `time-`, as yuuuTime would write them; never `app-`, the base already ships `.app-shell`). The preview page (`docs/preview/index.html`) uses them with the `pv-` prefix.
 
 ```html
 <header class="page-header">
-    <div class="app-person">
+    <div class="time-person">
         <span class="avatar avatar--large" aria-hidden="true">EL</span>
         <div>
             <h1>Elsa Lundqvist</h1>
@@ -455,25 +479,25 @@ Two layouts the base leaves to the app: a few lines in its own layer, with its o
     <div class="page-actions">...</div>
 </header>
 
-<div class="app-stats">
+<div class="time-stats">
     <div class="stat"><span class="stat__label">Hours this week</span><span class="stat__value">37:30</span></div>
     <div class="stat"><span class="stat__label">Hour bank</span><span class="stat__value">+4:15</span></div>
 </div>
 ```
 
 ```css
-.app-person {
+.time-person {
     display: flex;
     align-items: center;
     gap: var(--yuuu-space-4);
 }
 
-.app-person h1,
-.app-person p {
+.time-person h1,
+.time-person p {
     margin: 0;
 }
 
-.app-stats {
+.time-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
     gap: var(--yuuu-space-4);
@@ -812,9 +836,9 @@ An app that overrides tokens decides whether its values apply to both schemes or
 - **Non-text, 3:1** (WCAG 1.4.11; WCAG has no AAA level for it): control outlines, the invalid border, the focus ring, an accent used only as a marker (an active tab's underline, a status dot), borders and dividers.
 - **Beyond contrast**, the AAA criteria that matter for the suite's apps: anything tapped is at least **44×44 px** (WCAG 2.5.5, clocking buttons and kiosks above all); the **focus is always visible**; and **no meaning is carried by colour alone** (a badge says «Activo», it is not only green).
 
-> **Status.** This policy was adopted on 2026-11-23 (yuuuTime decision T-180). From **0.5** the tests enforce the tiers: every pair is classified as «reading» (7:1, or 4.5:1 if marked large) or «secondary» (4.5:1), and the control pairs stay at 3:1. `StylesheetContrastTest::pairsFor("reading" | "secondary" | "control")` returns the lists, so an app can run its own override through the same tiers. The dark `.btn--danger` hover and press states are AA only, as the policy allows.
+> **Status.** This policy was adopted on 2026-11-23 (yuuuTime decision T-180). From **0.5** the tests enforce the tiers: every pair is classified as «reading» (7:1) or «secondary» (4.5:1), and the control pairs stay at 3:1; no pair of the base is large text today. The lists ship in `Yuuues\YuuuUi\Contrast`, so an app runs its own override through the same tiers (§4, *The override contract*). The dark `.btn--danger` hover and press states are AA only, as the policy allows.
 
-`tests/Unit/Styles/StylesheetContrastTest.php` reads the real token values from the stylesheet and checks every pair the CSS paints together, in both schemes. It also fails when a token is painted as a text colour or a background without a pair in its lists, and when a `brightness()` filter is not checked. Current values (AAA = 7:1 or more):
+`tests/Unit/Styles/StylesheetContrastTest.php` reads the real token values from the stylesheet with `Contrast::colors()` and checks every pair of `Contrast` with `Contrast::failures()`, in both schemes. It also fails when a token is painted as a text colour or a background without a pair in its lists, and when a `brightness()` filter is not checked. Current values (AAA = 7:1 or more):
 
 | Text pair | Light | Dark | Required | AAA |
 |---|---|---|---|---|
@@ -840,6 +864,7 @@ An app that overrides tokens decides whether its values apply to both schemes or
 | `accent-ink` on `bg` (defaults) | 15.31:1 | 15.68:1 | 7 | yes |
 | `accent-ink` on `surface` (defaults) | 16.56:1 | 14.46:1 | 7 | yes |
 | `accent-ink` on `accent-soft` (defaults) | 15.03:1 | 12.60:1 | 7 | yes |
+| `text` on `accent-soft` (defaults; an app's text on the tint) | 15.03:1 | 12.60:1 | 7 | yes |
 
 | Hovered or pressed button (text and background dimmed) | Light | Dark | Required | AAA |
 |---|---|---|---|---|
@@ -862,6 +887,7 @@ The danger button stays below 7:1 while hovered or pressed on purpose: holding 7
 | `danger-solid` on `bg` | 7.13:1 | 7.10:1 | 3 |
 | `text` on `surface` (focus ring) | 16.56:1 | 14.46:1 | 3 |
 | `text` on `bg` | 15.31:1 | 15.68:1 | 3 |
+| `accent-ink` on `surface` (a marker: the side-menu bar, the tab underline) | 16.56:1 | 14.46:1 | 3 |
 
 Not tested, on purpose:
 
@@ -987,6 +1013,8 @@ Every 0.4.0 rule and token is unchanged: `CompatibilityTest` guards them, so an 
 - **New components**: app shell and side menu, tabs, avatar, stat, data list, card action, and a compact density that applies to fine pointers only (§5).
 - **Tailwind v4 entry point**, `@yuuues/yuuu-ui/tailwind.css`: four lines of import that skip Tailwind's preflight (§12, *Tailwind*).
 - **Preview page** (`docs/preview/index.html`) and a worked example, warm teal (`docs/preview/warm-teal.css`; §4).
+- **`Yuuues\YuuuUi\Contrast`**, a shipped PHP class with the pairs of every tier and the maths (WCAG ratio, the button filters, the light and dark token values of stylesheets laid over each other): an app's PHPUnit test checks its brand override with it (§4). The bundle's own contrast test uses it too.
+- **`yuuu-ui.js` scrolls the current side-menu link or tab into view** inside its row on narrow screens; only the row scrolls, never the page (§5).
 
 ## 11. Development
 
@@ -997,9 +1025,9 @@ docker run --rm -v "$PWD":/app -w /app darkkyto/yuuu-app-ci-php:8.4-1 bin/verify
 
 On Git Bash for Windows, prefix both with `MSYS_NO_PATHCONV=1`.
 
-`bin/verify` is the gate of the bundle, the same one CI runs: php-cs-fixer, PHPStan level 8, and PHPUnit (unit and functional suites). A new class in the stylesheet needs its entry in §5, or the suite fails. A new colour pair needs its line in `StylesheetContrastTest`. A new `data-` attribute in the script needs its line in the table of *Dialogs*, and the script must stay under 3 KiB.
+`bin/verify` is the gate of the bundle, the same one CI runs: php-cs-fixer, PHPStan level 8, and PHPUnit (unit and functional suites). A new class in the stylesheet needs its entry in §5, or the suite fails. A new colour pair needs its line in `src/Contrast.php`. A new `data-` attribute in the script needs its line in the table of *Dialogs*, and the script must stay under 3 KiB.
 
-PHPUnit cannot click a dialog: the script's behaviour is checked by hand in a browser (open from a link, Escape, backdrop, Cancel, confirm submits the original form with its button, focus back on the trigger, and nothing intercepted without the script). `ScriptHygieneTest` guards what can be read from the source.
+PHPUnit cannot click a dialog: the script's behaviour is checked by hand in a browser (open from a link, Escape, backdrop, Cancel, confirm submits the original form with its button, focus back on the trigger, and nothing intercepted without the script; at phone width, the preview's late current link, «Quiosco», is in view in the side-menu row and the page is not scrolled). `ScriptHygieneTest` guards what can be read from the source.
 
 **`tokens.css` is generated, never edited.** Section 1 of `yuuu-base.css` is the one source of truth; after changing a token, regenerate the copy and commit both files:
 
@@ -1031,7 +1059,7 @@ npm i github:yuuues/yuuu-ui#v0.5.0
 pnpm add github:yuuues/yuuu-ui#v0.5.0
 ```
 
-`package.json` gets `"@yuuues/yuuu-ui": "github:yuuues/yuuu-ui#v0.5.0"` and the lockfile pins the commit. The package ships the two CSS files (plus its README, LICENSE and `package.json`), and **nothing runs on install**: the CSS is committed, built, so it works with `ignore-scripts=true`. Both npm and pnpm need **`git`** on the machine to resolve the tag; slim images such as `node:22-alpine` lack it (`apk add git`).
+`package.json` gets `"@yuuues/yuuu-ui": "github:yuuues/yuuu-ui#v0.5.0"` and the lockfile pins the commit. The package ships the three CSS files, `tokens.css`, `yuuu-base.css` and `tailwind.css` (plus its README, LICENSE and `package.json`), and **nothing runs on install**: the CSS is committed, built, so it works with `ignore-scripts=true`. Both npm and pnpm need **`git`** on the machine to resolve the tag; slim images such as `node:22-alpine` lack it (`apk add git`).
 
 The package is `private`: it is never published to a registry, the git tag is the release.
 
@@ -1110,7 +1138,7 @@ An app that compiles [Tailwind CSS](https://tailwindcss.com) v4 writes this in i
 ```
 
 - **No `@import "tailwindcss"`: Tailwind's preflight stays out.** `yuuu-base.css` already is the base layer of a yuuu app; preflight would change how lists, headings, images, inline svg, dialogs and placeholders look, and a Tailwind app must look like any other yuuu page.
-- **Never link or import `yuuu-base.css` / `base.css` as well.** `tailwind.css` already imports it, into the `components` layer.
+- **Never link or import `yuuu-base.css` / `base.css` as well.** `tailwind.css` already imports it, into the `components` layer. A second, unlayered copy beats every layered rule, utilities included: `<div class="card p-2">` would keep the padding of `.card`, and `p-2` would do nothing. So a Twig app that compiles Tailwind links its compiled stylesheet **instead of** `{{ yuuu_ui_stylesheet() }}` (§3), and drops that line from its base layout.
 - **Utilities beat components**, because Tailwind declares the `utilities` layer after `components`: `<div class="card p-2">` has the padding of `p-2`, not the one of `.card`.
 - **The theme is the tokens.** Colour utilities (`bg-*`, `text-*`, `border-*`...) take these names, each reading its `--yuuu-color-*` token, so dark mode and an app's brand override (§4) reach every utility:
   `bg`, `surface`, `border`, `border-strong`, `text`, `muted` (`--yuuu-color-text-muted`), `primary`, `primary-text`, `accent`, `accent-text`, `accent-ink`, `accent-soft`, `danger-solid`, `danger-solid-text`, and `success`, `warning`, `danger`, `info`, `neutral`, each with `-text`, `-bg` and `-border` (`bg-success-bg text-success-text border-success-border`).
