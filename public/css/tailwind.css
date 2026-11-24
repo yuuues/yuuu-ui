@@ -2,8 +2,16 @@
  * yuuu-ui for Tailwind CSS v4: the theme mapped to the --yuuu-* tokens,
  * and the base classes of yuuu-base.css in the `components` layer.
  *
- *   @import "tailwindcss";
+ *   @layer theme, base, components, utilities;
+ *   @import "tailwindcss/theme.css" layer(theme);
+ *   @import "tailwindcss/utilities.css" layer(utilities);
  *   @import "@yuuues/yuuu-ui/tailwind.css";
+ *
+ * Tailwind's preflight is left out on purpose (no `@import "tailwindcss"`):
+ * yuuu-base.css is the base layer of a yuuu app, and preflight would change
+ * the 0.4 look of lists, headings, images, inline svg, dialog centring and
+ * placeholders. The Tailwind imports stay in the app's stylesheet, so this
+ * package needs no dependency on tailwindcss.
  *
  * Never link yuuu-base.css as well: it is already imported here.
  * Utilities live in a later layer than components, so `p-4` beats the
@@ -16,37 +24,6 @@
  */
 
 @import "./yuuu-base.css" layer(components);
-
-/*
- * Tailwind's preflight resets some plain elements that yuuu-base.css
- * leaves to the browser, so a Tailwind app would not look like a 0.4 page.
- * Give those back to the browser's own styles. It comes after the preflight
- * in the same base layer, and utilities (list-none, block...) still win.
- * Not reverted: margins and padding of other elements, which yuuu-base.css
- * sets where it needs them.
- */
-@layer base {
-    ul,
-    ol {
-        list-style: revert;
-        padding-inline-start: revert;
-    }
-
-    h4,
-    h5,
-    h6 {
-        font-size: revert;
-        font-weight: revert;
-    }
-
-    /* yuuu-base.css keeps `height` out on purpose: it would cancel a height= attribute. */
-    img,
-    video {
-        display: revert;
-        vertical-align: revert;
-        height: revert;
-    }
-}
 
 /* Dark mode follows the system, as in yuuu-base.css. */
 @custom-variant dark (@media (prefers-color-scheme: dark));

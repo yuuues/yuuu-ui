@@ -50,7 +50,7 @@ function utilities(html) {
         'border-border': 'border-color:var(--yuuu-color-border)',
     };
     for (const [name, declaration] of Object.entries(rules)) {
-        const rule = html.match(new RegExp(`\.${name}\{[^}]*\}`));
+        const rule = html.match(new RegExp(`\\.${name}\\{[^}]*\\}`));
         check(rule !== null && rule[0].includes(declaration), `utilities: .${name} is not generated as ${declaration} (${rule?.[0]})`);
     }
     // dark: follows the system (@custom-variant), not a .dark class.
@@ -64,12 +64,10 @@ function utilities(html) {
     // Secondary, tied to the palette of Tailwind 4.3: red-500 in oklch.
     check(!/--color-red-500|oklch\(63\.7%/.test(html), 'utilities: a default palette value leaked');
 
-    // Preflight's resets of plain elements are given back to the browser,
-    // inside the base layer (after the preflight, before components).
-    const base = layerBlock(html, 'base');
-    for (const reverted of ['ul,ol{list-style:revert;padding-inline-start:revert}', 'h4,h5,h6{font-size:revert;font-weight:revert}', 'img,video{display:revert;vertical-align:revert;height:revert}']) {
-        check(base.includes(reverted), `utilities: the base layer does not contain ${reverted}`);
-    }
+    // yuuu-base.css is the base layer: Tailwind's preflight must not be in
+    // the page (it would change lists, headings, images, dialogs...).
+    check(!/ol,ul,menu\{list-style:none\}/.test(html), 'utilities: preflight is loaded (ol,ul,menu{list-style:none})');
+    check(!/box-sizing:border-box;border:0 solid;margin:0;padding:0/.test(html), 'utilities: preflight is loaded (the universal reset)');
 
     // The build flattens the layer order statement away, but the layer
     // blocks keep their order: components before utilities, so utilities win.

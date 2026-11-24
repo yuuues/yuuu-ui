@@ -1,3 +1,5 @@
-/* What an app using Tailwind writes: nothing else, never yuuu-base.css. */
-@import "tailwindcss";
+/* What an app using Tailwind writes: no preflight, never yuuu-base.css. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
 @import "@yuuues/yuuu-ui/tailwind.css";

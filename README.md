@@ -891,7 +891,7 @@ docker run --rm -v "$PWD":/app -w /app darkkyto/yuuu-app-ci-php:8.4-1 php bin/bu
 docker run --rm -v "$PWD":/app -w /app node:22-alpine sh bin/verify-package
 ```
 
-It checks the exact list of files `npm pack` ships, then copies `tests/npm` (a throwaway Vite + Preact app with a locked set of dependencies) to a temporary directory, installs the packed tarball into it with scripts off, and builds three single-file pages, importing `tokens.css`, `base.css` and `tailwind.css` (with Tailwind). It fails if the three subpaths do not resolve through `exports` (or a path outside them does), if `tokens.css` or `base.css` does not parse strictly (lightningcss; `tailwind.css` uses Tailwind's at-rules, so its build is the test), if a page is not one self-contained HTML file (a `src=`, an `href=`, a `<link>`, an `@import`, a `url()`, a `fetch()` or a dynamic `import()`), if the light or dark tokens are missing from it, or, in the `tokens` and `base` pages, if the app's brand override does not come after the defaults. In the Tailwind page it also checks the generated rules (`bg-surface`, `text-muted`, `rounded-lg`, `shadow-card`, `border-border` read the `--yuuu-*` tokens; `dark:` sits in `prefers-color-scheme: dark`; Tailwind's palette produces no rule; the preflight reverts are in the base layer; `.btn` is in the components layer, before utilities). The working tree is never touched.
+It checks the exact list of files `npm pack` ships, then copies `tests/npm` (a throwaway Vite + Preact app with a locked set of dependencies) to a temporary directory, installs the packed tarball into it with scripts off, and builds three single-file pages, importing `tokens.css`, `base.css` and `tailwind.css` (with Tailwind). It fails if the three subpaths do not resolve through `exports` (or a path outside them does), if `tokens.css` or `base.css` does not parse strictly (lightningcss; `tailwind.css` uses Tailwind's at-rules, so its build is the test), if a page is not one self-contained HTML file (a `src=`, an `href=`, a `<link>`, an `@import`, a `url()`, a `fetch()` or a dynamic `import()`), if the light or dark tokens are missing from it, or, in the `tokens` and `base` pages, if the app's brand override does not come after the defaults. In the Tailwind page it also checks the generated rules (`bg-surface`, `text-muted`, `rounded-lg`, `shadow-card`, `border-border` read the `--yuuu-*` tokens; `dark:` sits in `prefers-color-scheme: dark`; Tailwind's palette produces no rule; Tailwind's preflight is absent; `.btn` is in the components layer, before utilities). The working tree is never touched.
 
 ## 12. Using yuuu-ui from a JavaScript app (Vite/Preact)
 
@@ -976,21 +976,23 @@ The app answers for the contrast of its own pair (§4, *Brand tokens*). Status c
 
 ### Tailwind
 
-An app that compiles [Tailwind CSS](https://tailwindcss.com) v4 imports the entry point after Tailwind:
+An app that compiles [Tailwind CSS](https://tailwindcss.com) v4 writes this in its own stylesheet (Tailwind is the app's dependency, not yuuu-ui's):
 
 ```css
-@import "tailwindcss";
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
 @import "@yuuues/yuuu-ui/tailwind.css";
 ```
 
+- **No `@import "tailwindcss"`: Tailwind's preflight stays out.** `yuuu-base.css` already is the base layer of a yuuu app; preflight would change how lists, headings, images, inline svg, dialogs and placeholders look, and a Tailwind app must look like any other yuuu page.
 - **Never link or import `yuuu-base.css` / `base.css` as well.** `tailwind.css` already imports it, into the `components` layer.
 - **Utilities beat components**, because Tailwind declares the `utilities` layer after `components`: `<div class="card p-2">` has the padding of `p-2`, not the one of `.card`.
-- **The theme is the tokens.** Colour utilities (`bg-*`, `text-*`, `border-*`...) take these names, each reading its `--yuuu-color-*` token, so dark mode and an app's brand override (�4) reach every utility:
+- **The theme is the tokens.** Colour utilities (`bg-*`, `text-*`, `border-*`...) take these names, each reading its `--yuuu-color-*` token, so dark mode and an app's brand override (§4) reach every utility:
   `bg`, `surface`, `border`, `border-strong`, `text`, `muted` (`--yuuu-color-text-muted`), `primary`, `primary-text`, `accent`, `accent-text`, `accent-ink`, `accent-soft`, `danger-solid`, `danger-solid-text`, and `success`, `warning`, `danger`, `info`, `neutral`, each with `-text`, `-bg` and `-border` (`bg-success-bg text-success-text border-success-border`).
   Also `rounded-sm` (6px) and `rounded-lg` (12px), `shadow-card`, `font-sans` and `font-mono`, and `max-w-content` (the content width).
-- **Tailwind's own palette is intentionally absent**: `bg-red-500` generates nothing, and neither do its other colours, radii, shadows or fonts. Colours outside the suite come from the app's own CSS.
+- **Tailwind's own palette is intentionally absent**: `bg-red-500`, `text-blue-600` and the like do not exist and generate nothing, and neither do its other colours, radii, shadows or fonts. Colours outside the suite come from the app's own CSS.
 - **Spacing** stays on Tailwind's 0.25rem step, which is `--yuuu-space-1`, and the two scales agree up to 4 (`p-4` is `--yuuu-space-4`). After that they diverge: `p-5` is 1.25rem, `--yuuu-space-5` is 1.5rem. `p-N` is not `space-N`.
-- **Plain elements look as on a 0.4 page.** Tailwind's preflight strips bullets and indentation from lists, the size and weight of `h4`-`h6`, and makes images and videos blocks with `height: auto`. `tailwind.css` gives those back to the browser, in the base layer; `list-none`, `block` and the other utilities still win.
 - **Dark mode follows the system.** `dark:` uses `prefers-color-scheme`; the tokens already switch on their own, so `dark:` is only for what has no token.
 
 ### Updating
