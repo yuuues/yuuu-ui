@@ -139,28 +139,29 @@ To use different values in dark mode, add your own dark block after it:
 | `--yuuu-color-accent-ink` | `#1b1f24` | `#e8eaed` | The accent as text, or as a marker, on `bg` and `surface` (for the app's own use) |
 | `--yuuu-color-accent-soft` | `#f2f4f7` | `#22262d` | A tinted background that carries `accent-ink` text (for the app's own use) |
 
-**You answer for the contrast of your own pair.** The base tests its defaults; it cannot test yours. Text on the primary colour must reach **4.5:1** (AA, required). Pick the text colour with the WCAG relative luminance, as yuuuID does for each company's colours: white or near-black (`#111111`), whichever contrasts more. For the CRM, `#ffffff` on `#4055ff` gives **5.30:1**: it passes AA.
+**You answer for the contrast of your own pairs.** The base tests its defaults; it cannot test yours. A button label is read to work, so text on the primary colour (and on the accent colour) must reach the **reading tier, 7:1** (WCAG 1.4.6): the same rule as the override contract below and §7. Pick the text colour with the WCAG relative luminance, as yuuuID does for each company's colours: white or near-black (`#111111`), whichever contrasts more, and then check that the winner reaches 7:1. A mid-tone often cannot: for the CRM, `#ffffff` on `#4055ff` gives **5.30:1**, which is AA but not the reading tier, and black gives only 3.96:1. The CRM has to darken its blue (next section).
 
 The brand colour is only ever used as a **background** with its own text token, and as an ornament. Links, focus rings, form outlines and status colours stay neutral on purpose: a brand colour that reads well on white disappears on the dark background, and the other way round.
 
-`.btn:hover` and `.btn:active` dim the whole button, text included, with `filter: brightness(0.92)` and `brightness(0.85)`. That lowers the ratio of a pair with white text: `#4055ff` with white drops from 5.30:1 to 5.07:1 on hover and 4.82:1 while pressed. Leave some headroom above 4.5:1.
+`.btn:hover` and `.btn:active` dim the whole button, text included, with `filter: brightness(0.92)` and `brightness(0.85)`. These states are the **secondary tier** (4.5:1, §7): the pair at rest must reach 7:1, and the dimmed pair must stay above 4.5:1.
 
-### Brand overrides and AAA
+### Brand overrides at the reading tier
 
-AA is the requirement; AAA (7:1) is an **option** the app can take for its own brand. A brand colour used as the background of normal-size text reaches AAA only if it gets 7:1 with its `-text` pair. Mid-tones often cannot, with pure black or with pure white: `#4055ff` gives 5.30:1 with white and 3.96:1 with black.
+There is one rule: the tiers of §7 (reading 7:1, secondary 4.5:1, non-text 3:1). A brand colour used as the background of normal-size text must get 7:1 with its `-text` pair. Mid-tones often cannot, with pure black or with pure white: `#4055ff` gives 5.30:1 with white and 3.96:1 with black, so an app that keeps that blue as `primary` fails the reading tier.
 
-The way out is to keep the bright tone for what carries no text (the `.card` stripe through `--yuuu-color-accent`, the app's own ornaments) and to give `--yuuu-color-primary` a **darker shade of the same hue** for the surfaces that carry text. For `#4055ff` (HSL 233°, 100%, 63%), the closest shade with the same hue and saturation that reaches 7:1 with white is **`#1b34ff`** (lightness 55%): **7.04:1**. Mixed with black instead of lowering the HSL lightness, the closest is `#3546d3` (7.08:1).
+The way out is to keep the bright tone for what carries no text (the `.card` stripe, the app's own ornaments) and to give the surfaces that carry text a **darker shade of the same hue**. For `#4055ff` (HSL 233°, 100%, 63%), the closest shade with the same hue and saturation that reaches 7:1 with white is **`#1b34ff`** (lightness 55%): **7.04:1**. Mixed with black instead of lowering the HSL lightness, the closest is `#3546d3` (7.08:1).
 
 ```css
-/* Optional: the CRM's brand at AAA. */
+/* The CRM's brand at the reading tier. */
 :root {
     --yuuu-color-primary: #1b34ff;      /* 7.04:1 with white */
     --yuuu-color-primary-text: #ffffff;
-    --yuuu-color-accent: #4055ff;       /* the bright tone, no text on it */
 }
 ```
 
-Even at 7:1 at rest, the hover and pressed filters bring the pair below 7:1 (`#1b34ff`: 6.61:1 hovered, 6.20:1 pressed), still well above AA. A shade that holds 7:1 while pressed too is `#001cfe` (8.09:1 at rest). In dark mode the same applies with near-black text: `#8c99ff` with `#111111` gives 7.30:1 at rest.
+The bright `#4055ff` can stay where no text sits on it (an ornament in the app's own layer). If it is set as `--yuuu-color-accent`, its `accent-text` pair is a reading pair too, so it must reach 7:1 as well.
+
+Even at 7:1 at rest, the hover and pressed filters bring the pair below 7:1 (`#1b34ff`: 6.61:1 hovered, 6.20:1 pressed), still above the 4.5:1 secondary tier those states need. A shade that holds 7:1 while pressed too is `#001cfe` (8.09:1 at rest). In dark mode the same applies with near-black text: `#8c99ff` with `#111111` gives 7.30:1 at rest.
 
 ### The override contract
 

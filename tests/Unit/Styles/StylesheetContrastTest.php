@@ -41,7 +41,7 @@ final class StylesheetContrastTest extends TestCase
     private const float LARGE_READING_MINIMUM = 4.5;
 
     /** Secondary text, level AA (WCAG 1.4.3). */
-    private const float TEXT_MINIMUM = 4.5;
+    private const float SECONDARY_MINIMUM = 4.5;
 
     private const float NON_TEXT_MINIMUM = 3.0;
 
@@ -186,7 +186,7 @@ final class StylesheetContrastTest extends TestCase
 
         foreach (self::pairsFor('secondary') as [$foreground, $background]) {
             $ratio = Stylesheet::contrast(self::color($colors, $foreground), self::color($colors, $background));
-            if ($ratio < self::TEXT_MINIMUM) {
+            if ($ratio < self::SECONDARY_MINIMUM) {
                 $failures[] = \sprintf('%s on %s in %s: %.2f:1', $foreground, $background, $mode, $ratio);
             }
         }
@@ -215,7 +215,7 @@ final class StylesheetContrastTest extends TestCase
             }
 
             $ratio = Stylesheet::contrast($text, $behind);
-            if ($ratio < self::TEXT_MINIMUM) {
+            if ($ratio < self::SECONDARY_MINIMUM) {
                 $failures[] = \sprintf('%s on %s at brightness(%s) in %s: %.2f:1', $foreground, $background, $factor, $mode, $ratio);
             }
         }
