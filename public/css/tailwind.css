@@ -17,6 +17,37 @@
 
 @import "./yuuu-base.css" layer(components);
 
+/*
+ * Tailwind's preflight resets some plain elements that yuuu-base.css
+ * leaves to the browser, so a Tailwind app would not look like a 0.4 page.
+ * Give those back to the browser's own styles. It comes after the preflight
+ * in the same base layer, and utilities (list-none, block...) still win.
+ * Not reverted: margins and padding of other elements, which yuuu-base.css
+ * sets where it needs them.
+ */
+@layer base {
+    ul,
+    ol {
+        list-style: revert;
+        padding-inline-start: revert;
+    }
+
+    h4,
+    h5,
+    h6 {
+        font-size: revert;
+        font-weight: revert;
+    }
+
+    /* yuuu-base.css keeps `height` out on purpose: it would cancel a height= attribute. */
+    img,
+    video {
+        display: revert;
+        vertical-align: revert;
+        height: revert;
+    }
+}
+
 /* Dark mode follows the system, as in yuuu-base.css. */
 @custom-variant dark (@media (prefers-color-scheme: dark));
 

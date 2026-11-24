@@ -39,15 +39,37 @@ function pack(file) {
 // --yuuu-* tokens, Tailwind's own palette is gone, and the base classes sit
 // in the components layer (declared before utilities, so utilities win).
 function utilities(html) {
-    check(html.includes('var(--yuuu-color-surface)'), 'utilities: bg-surface does not use var(--yuuu-color-surface)');
-    check(html.includes('var(--yuuu-color-text-muted)'), 'utilities: text-muted does not use var(--yuuu-color-text-muted)');
-    check(html.includes('var(--yuuu-radius-2)'), 'utilities: rounded-lg does not use var(--yuuu-radius-2)');
-    check(html.includes('var(--yuuu-shadow)'), 'utilities: shadow-card does not use var(--yuuu-shadow)');
-    check(html.includes('var(--yuuu-color-border)'), 'utilities: border-border does not use var(--yuuu-color-border)');
+    // The generated RULES, not a mention: yuuu-base.css is inlined on the
+    // same page and contains every one of these var() strings itself.
+    // `inline` in @theme is what makes the rule read the token directly.
+    const rules = {
+        'bg-surface': 'background-color:var(--yuuu-color-surface)',
+        'text-muted': 'color:var(--yuuu-color-text-muted)',
+        'rounded-lg': 'border-radius:var(--yuuu-radius-2)',
+        'shadow-card': '--tw-shadow:var(--yuuu-shadow);',
+        'border-border': 'border-color:var(--yuuu-color-border)',
+    };
+    for (const [name, declaration] of Object.entries(rules)) {
+        const rule = html.match(new RegExp(`\.${name}\{[^}]*\}`));
+        check(rule !== null && rule[0].includes(declaration), `utilities: .${name} is not generated as ${declaration} (${rule?.[0]})`);
+    }
+    // dark: follows the system (@custom-variant), not a .dark class.
+    check(
+        /@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\.dark\\:bg-bg\{background-color:var\(--yuuu-color-bg\)\}/.test(html),
+        'utilities: dark:bg-bg is not inside @media (prefers-color-scheme: dark)',
+    );
     // The page uses bg-red-500 on purpose: with the default palette reset,
     // Tailwind must emit no rule for it.
-    check(!/\.bg-red-500/.test(html), 'utilities: bg-red-500 exists, the default palette is not reset');
+    check(!/\.bg-red-500\{/.test(html), 'utilities: bg-red-500 exists, the default palette is not reset');
+    // Secondary, tied to the palette of Tailwind 4.3: red-500 in oklch.
     check(!/--color-red-500|oklch\(63\.7%/.test(html), 'utilities: a default palette value leaked');
+
+    // Preflight's resets of plain elements are given back to the browser,
+    // inside the base layer (after the preflight, before components).
+    const base = layerBlock(html, 'base');
+    for (const reverted of ['ul,ol{list-style:revert;padding-inline-start:revert}', 'h4,h5,h6{font-size:revert;font-weight:revert}', 'img,video{display:revert;vertical-align:revert;height:revert}']) {
+        check(base.includes(reverted), `utilities: the base layer does not contain ${reverted}`);
+    }
 
     // The build flattens the layer order statement away, but the layer
     // blocks keep their order: components before utilities, so utilities win.
