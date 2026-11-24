@@ -1124,6 +1124,8 @@ fieldset {
         gap: var(--yuuu-space-2);
         padding: var(--yuuu-space-2) var(--yuuu-space-4);
         overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--yuuu-color-border-strong) transparent;
         border-right: 0;
         border-bottom: 1px solid var(--yuuu-color-border);
     }
@@ -1149,12 +1151,15 @@ fieldset {
  * ------------------------------------------------------------------- */
 
 /* A <nav> of links, or a role="tablist". It scrolls sideways when the
-   labels do not fit. */
+   labels do not fit, with a thin scrollbar: still the cue that more tabs
+   exist, without the heavy classic bar under the row. */
 .tabs {
     display: flex;
     gap: var(--yuuu-space-1) var(--yuuu-space-4);
     margin: 0 0 var(--yuuu-space-4);
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--yuuu-color-border-strong) transparent;
     box-shadow: inset 0 -1px 0 var(--yuuu-color-border);
 }
 
@@ -1282,6 +1287,12 @@ fieldset {
 
 .card__header:has(> .card__action) > * {
     margin-bottom: 0;
+}
+
+/* The 2.75rem target reaches into the card's padding (equal negative
+   block margins), so the row is as tall as the title, not the target. */
+.card__header:has(> .card__action) > .card__action {
+    margin-block: -0.625rem;
 }
 
 .card__action {

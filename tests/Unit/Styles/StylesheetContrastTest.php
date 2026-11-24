@@ -48,6 +48,22 @@ final class StylesheetContrastTest extends TestCase
     /** The override example of the preview page (README §4). */
     private const string WARM_TEAL = __DIR__.'/../../../docs/preview/warm-teal.css';
 
+    /** The colour tokens of the override contract (README §4): accent family and neutral tint. */
+    private const array CONTRACT_COLOURS = [
+        '--yuuu-color-primary',
+        '--yuuu-color-primary-text',
+        '--yuuu-color-accent',
+        '--yuuu-color-accent-text',
+        '--yuuu-color-accent-ink',
+        '--yuuu-color-accent-soft',
+        '--yuuu-color-bg',
+        '--yuuu-color-surface',
+        '--yuuu-color-border',
+        '--yuuu-color-border-strong',
+        '--yuuu-color-text',
+        '--yuuu-color-text-muted',
+    ];
+
     /**
      * Text that is read to work: it must reach 7:1, or 4.5:1 when the
      * optional third element marks it as large text.
@@ -187,6 +203,13 @@ final class StylesheetContrastTest extends TestCase
     #[DataProvider('modes')]
     public function testWarmTealExampleMeetsTheTiers(string $mode): void
     {
+        // The example must define the colour tokens of the contract itself
+        // in this mode, or the check would silently test the defaults.
+        $declared = 'light' === $mode ? array_keys(Stylesheet::colors('light', self::WARM_TEAL)) : Stylesheet::darkTokens(self::WARM_TEAL);
+        foreach (self::CONTRACT_COLOURS as $token) {
+            self::assertContains($token, $declared, \sprintf('warm-teal.css does not define %s in %s.', $token, $mode));
+        }
+
         $colors = array_merge(Stylesheet::colors($mode), Stylesheet::colors($mode, self::WARM_TEAL));
         $failures = [
             ...self::readingFailures($colors, $mode),

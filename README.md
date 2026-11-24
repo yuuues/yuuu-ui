@@ -437,6 +437,54 @@ A `<dl>` of label and value pairs in two columns (the label column as wide as it
 
 Accessibility: a real description list, so the pairing is announced; long values wrap instead of widening the page.
 
+#### Recommended patterns: a person header, a row of figures
+
+Two layouts the base leaves to the app: a few lines in its own layer, with its own prefix. The preview page (`docs/preview/index.html`) uses them with the `pv-` prefix.
+
+```html
+<header class="page-header">
+    <div class="app-person">
+        <span class="avatar avatar--large" aria-hidden="true">EL</span>
+        <div>
+            <h1>Elsa Lundqvist</h1>
+            <p class="muted">Management · North centre</p>
+        </div>
+    </div>
+    <div class="page-actions">...</div>
+</header>
+
+<div class="app-stats">
+    <div class="stat"><span class="stat__label">Hours this week</span><span class="stat__value">37:30</span></div>
+    <div class="stat"><span class="stat__label">Hour bank</span><span class="stat__value">+4:15</span></div>
+</div>
+```
+
+```css
+.app-person {
+    display: flex;
+    align-items: center;
+    gap: var(--yuuu-space-4);
+}
+
+.app-person h1,
+.app-person p {
+    margin: 0;
+}
+
+.app-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--yuuu-space-4);
+    margin-bottom: var(--yuuu-space-5);
+    padding: var(--yuuu-space-4) var(--yuuu-space-5);
+    background: var(--yuuu-color-surface);
+    border: 1px solid var(--yuuu-color-border);
+    border-radius: var(--yuuu-radius-2);
+}
+```
+
+The large avatar is decoration beside the name, which stays the `h1`. On a phone the figures stack, one per row.
+
 ### Compact density
 
 `html[data-density="compact"]` shrinks the spacing steps `--yuuu-space-3` to `--yuuu-space-7` for dense screens. The `.btn`, `.pagination__link` and field heights drop from 2.75rem to 2.25rem **only when the device has no coarse pointer at all** (`@media (pointer: fine) and (not (any-pointer: coarse))`, so a touchscreen laptop keeps 44 px); anything tapped stays at 44 px (T-180). `.btn--small`, `.side-nav__link`, `.tabs__link` and `.card__action` keep their default size.
