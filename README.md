@@ -170,10 +170,10 @@ These are the tokens an app may redefine in its own layer. Everything else (stat
 | Group | Tokens | Pairs the override must still meet |
 |---|---|---|
 | Accent | `primary`, `primary-text`, `accent`, `accent-text`, `accent-ink`, `accent-soft` | Reading, **7:1**: `primary-text` on `primary`, `accent-text` on `accent`, `accent-ink` on `bg`, on `surface` and on `accent-soft`. Non-text, **3:1**: `accent-ink` on `surface` as a marker. |
-| Neutral tint | `bg`, `surface`, `border`, `border-strong`, `text`, `text-muted` | Reading, **7:1**: `text` and `text-muted` on `bg` and on `surface`, and `text` on every status background and on `accent-soft`. Non-text, **3:1**: `border-strong` on `bg` and on `surface`. `border` is decorative. |
+| Neutral tint | `bg`, `surface`, `border`, `border-strong`, `text`, `text-muted` | Reading, **7:1**: `text` on `bg` and on `surface`, and on every status background and on `accent-soft`. Secondary, **4.5:1**: `text-muted` on `bg` and on `surface`. Non-text, **3:1**: `border-strong` on `bg` and on `surface`. `border` is decorative. |
 | Shape | `radius-1`, `radius-2`, `shadow` | No contrast pair. The shadow must not be the only edge of a control: its outline is `border-strong`. |
 
-Secondary text (4.5:1) is the tier for muted metadata and the hovered or pressed states of buttons; the base lists no secondary pair yet. An app's own test can reuse the lists through `StylesheetContrastTest::pairsFor('reading' | 'secondary' | 'control')`.
+Secondary text (4.5:1) is the tier for muted metadata (`text-muted` on `bg` and on `surface`) and the hovered or pressed states of buttons. An app's own test can reuse the lists through `StylesheetContrastTest::pairsFor('reading' | 'secondary' | 'control')`.
 
 ### Other tokens
 
@@ -274,6 +274,102 @@ The centred card of the authentication screens (sign-in, activation, verificatio
         </form>
     </main>
 </body>
+```
+
+#### `.card__action`
+
+A link or a button at the end of a `.card__header`: «Edit», «See all». When the header holds one, it becomes a row: the title on the start side, the action on the end. The target is 2.75rem tall.
+
+```html
+<div class="card__header">
+    <h2>Contact</h2>
+    <a class="card__action" href="/people/7/edit">Edit</a>
+</div>
+```
+
+Accessibility: give the action a name that says what it acts on when several cards share a page (`aria-label="Edit contact"`).
+
+### App shell and side menu
+
+#### `.app-shell`, `.side-nav`, `.side-nav__group`, `.side-nav__link`
+
+A management area: the side menu on the start side, the content beside it. Under **48rem** the shell is one column and the menu becomes one row above the content that scrolls sideways, so it never widens the page. The shell has its own breakpoint because a side menu already crowds a tablet; the phone rules (30rem) are separate.
+
+```html
+<div class="app-shell">
+    <nav class="side-nav" aria-label="Management">
+        <p class="side-nav__group">People</p>
+        <a class="side-nav__link" href="/people" aria-current="page">Employees</a>
+        <a class="side-nav__link" href="/teams">Teams</a>
+        <p class="side-nav__group">Time</p>
+        <a class="side-nav__link" href="/schedules">Schedules</a>
+    </nav>
+    <main class="page">...</main>
+</div>
+```
+
+Accessibility: `aria-current="page"` marks the current link; the colour is not the only signal, the weight changes too and a bar marks the edge. Links are 2.75rem tall, the focus ring is the shared one, and `.side-nav__group` is secondary text (4.5:1).
+
+### Tabs, people and figures
+
+#### `.tabs`, `.tabs__link`
+
+Tabs that are links to other pages (a `<nav>`), or the tabs of a widget (`role="tablist"`, then `aria-selected` on the open one). The row scrolls sideways when the labels do not fit.
+
+```html
+<nav class="tabs" aria-label="Employee">
+    <a class="tabs__link" href="/people/7" aria-current="page">Profile</a>
+    <a class="tabs__link" href="/people/7/hours">Hours</a>
+</nav>
+```
+
+Accessibility: `aria-current="page"` or `aria-selected="true"` marks the open tab; the colour is not the only signal, the weight changes and a 2 px underline in `accent-ink` is drawn. The label stays in the text colour (reading tier). Tabs are 2.75rem tall.
+
+#### `.avatar`, `.avatar--small`, `.avatar--large`
+
+A circle of 2.5rem (1.75rem small, 3.5rem large). An `<img>` inside fills it; without a photo, put the initials as text: `accent-ink` on `accent-soft`.
+
+```html
+<span class="avatar" aria-hidden="true">EL</span>
+<span class="avatar avatar--large"><img src="/photos/7.jpg" alt=""></span>
+```
+
+Accessibility: the avatar is decoration next to a name, so give the image an empty `alt` and hide the initials with `aria-hidden="true"`; put the name in text beside it. If the avatar stands alone, give the image the person's name as `alt`.
+
+#### `.stat`, `.stat__label`, `.stat__value`
+
+A figure and what it counts. The label is secondary text (muted, 4.5:1); the value is bigger and in the text colour (reading tier, tabular figures).
+
+```html
+<div class="stat">
+    <span class="stat__label">Hours this week</span>
+    <span class="stat__value">37:30</span>
+</div>
+```
+
+Accessibility: keep the label next to the value in the source order; a screen reader reads «Hours this week 37:30» as one thought.
+
+#### `.data-list`
+
+A `<dl>` of label and value pairs in two columns (the label column 8 to 14rem). On narrow screens (30rem) it is one column: label, then value. Labels are secondary text, values are reading tier.
+
+```html
+<dl class="data-list">
+    <dt>Email</dt>
+    <dd>elsa@example.com</dd>
+    <dt>Started</dt>
+    <dd>2026-03-02</dd>
+</dl>
+```
+
+Accessibility: a real description list, so the pairing is announced; long values wrap instead of widening the page.
+
+### Compact density
+
+`html[data-density="compact"]` shrinks the spacing steps `--yuuu-space-3` to `--yuuu-space-7` for dense screens. The `.btn`, `.pagination__link` and field heights drop from 2.75rem to 2.25rem **only for a fine pointer** (`@media (pointer: fine)`); under a coarse pointer (a finger) the 44 px stay. `.btn--small`, `.side-nav__link`, `.tabs__link` and `.card__action` keep their default size.
+
+```html
+<html lang="en" data-density="compact">
 ```
 
 ### Navigation aids
@@ -466,7 +562,7 @@ With the loop above, the flash types the app uses must be `success`, `warning`, 
 
 #### `.muted`
 
-Secondary text: dates, counters, hints. Still 7:1 (AAA) on the page and on cards.
+Secondary text: dates, counters, hints. Required at 4.5:1 (AA); the default values reach 7:1 on the page and on cards.
 
 ```html
 <p class="muted">Last sign-in 3 days ago</p>
@@ -601,8 +697,8 @@ An app that overrides tokens decides whether its values apply to both schemes or
 |---|---|---|---|---|
 | `text` on `bg` | 15.31:1 | 15.68:1 | 7 | yes |
 | `text` on `surface` | 16.56:1 | 14.46:1 | 7 | yes |
-| `text-muted` on `bg` | 7.05:1 | 7.79:1 | 7 | yes |
-| `text-muted` on `surface` | 7.63:1 | 7.18:1 | 7 | yes |
+| `text-muted` on `bg` (secondary) | 7.05:1 | 7.79:1 | 4.5 | yes |
+| `text-muted` on `surface` (secondary) | 7.63:1 | 7.18:1 | 4.5 | yes |
 | `danger-text` on `surface` (`.field-error`) | 7.71:1 | 8.98:1 | 7 | yes |
 | `danger-text` on `bg` | 7.13:1 | 9.73:1 | 7 | yes |
 | `success-text` on `success-bg` | 7.07:1 | 10.14:1 | 7 | yes |
@@ -651,6 +747,8 @@ Not tested, on purpose:
 - **`.muted` inside a flash or a badge**: `.muted` is tested on the page and on cards. On the tinted backgrounds of flashes it ranges from 6.26:1 to 7.31:1 (AA, not always AAA).
 - The `.card` accent stripe: an ornament, it carries no information.
 - **The edge of a `.modal` against the dimmed page.** A dialog's outline is not a control and WCAG 1.4.11 does not ask for 3:1, but it must still be visible. For the record, with the default backdrop: in light mode the white surface against the dimmed page is 4.19:1; in dark mode the surface alone would be 1.17:1, so the dialog takes the `border-strong` edge there, 3.95:1 against the dimmed page.
+
+**The components of 0.5 add no new colour pair either.** The side menu, tabs, avatar, stat figures and data list paint `text` and `text-muted` on `bg` or `surface`, and `accent-ink` on `accent-soft` (the current link, the avatar initials), all in the tables above. Everything people read to work (link and tab labels, stat values, data-list values, initials) is reading tier; `.stat__label`, `.side-nav__group` and `dt` are secondary. The tab underline and the side-menu bar are `accent-ink` on `surface`, 3:1 as a marker.
 
 **The components of 0.3 add no new colour pair.** The dialogs, the breadcrumb, the pagination and the filter bar paint pairs already in the tables above: `text` on `surface` inside a `.modal`; `text` and `text-muted` on `bg` or `surface` for the breadcrumb, the pagination indicator and its dead ends; `border-strong` on `bg` or `surface` for the ring of a `.pagination__link`; the focus ring on `surface` inside dialogs (on a focused `.modal` itself the ring is drawn inside its edge, so it never falls on the backdrop). The backdrop carries no text.
 

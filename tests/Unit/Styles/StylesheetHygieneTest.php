@@ -100,6 +100,66 @@ final class StylesheetHygieneTest extends TestCase
         }
     }
 
+    public function testCompactHeightsOnlyForFinePointers(): void
+    {
+        $outside = Stylesheet::code();
+        $inside = '';
+
+        // `@media (pointer: fine) { ... }` blocks, by brace matching: the
+        // rules inside hold braces of their own.
+        while (false !== ($start = strpos($outside, '@media (pointer: fine)'))) {
+            $open = (int) strpos($outside, '{', $start);
+            $depth = 0;
+            $end = $open;
+            for ($length = \strlen($outside); $end < $length; ++$end) {
+                $depth += match ($outside[$end]) {
+                    '{' => 1,
+                    '}' => -1,
+                    default => 0,
+                };
+                if (0 === $depth) {
+                    break;
+                }
+            }
+            $inside .= substr($outside, $open + 1, $end - $open - 1);
+            $outside = substr($outside, 0, $start).substr($outside, $end + 1);
+        }
+
+        $compactHeights = static function (string $css): array {
+            preg_match_all('/([^{}]*\[data-density="compact"\][^{}]*)\{([^{}]*)\}/', $css, $rules, \PREG_SET_ORDER);
+            $found = [];
+            foreach ($rules as $rule) {
+                if (1 === preg_match('/(?<![a-z-])(?:min-)?height\s*:/', $rule[2])) {
+                    $found[] = trim($rule[1]);
+                }
+            }
+
+            return $found;
+        };
+
+        self::assertNotSame([], $compactHeights($inside), 'The compact heights must exist, inside @media (pointer: fine).');
+        self::assertSame([], $compactHeights($outside), 'A compact height outside @media (pointer: fine) would shrink touch targets.');
+    }
+
+    public function testTappableControlsAreAtLeast44px(): void
+    {
+        $code = Stylesheet::code();
+
+        foreach (['.btn', '.side-nav__link', '.tabs__link', '.pagination__link', '.card__action'] as $selector) {
+            preg_match_all('/(?:^|\})\s*'.preg_quote($selector, '/').'\s*\{([^{}]*)\}/', $code, $rules);
+            $heights = [];
+            foreach ($rules[1] as $body) {
+                if (1 === preg_match('/min-height\s*:\s*([0-9.]+)rem/', $body, $match)) {
+                    $heights[] = (float) $match[1];
+                }
+            }
+
+            self::assertNotSame([], $heights, $selector.' has no min-height.');
+            $tallest = [] === $heights ? 0.0 : max($heights);
+            self::assertGreaterThanOrEqual(2.75, $tallest, $selector.' is below 44 px (2.75rem).');
+        }
+    }
+
     public function testEveryClassIsDocumentedInTheReadme(): void
     {
         $readme = (string) file_get_contents(\dirname(__DIR__, 3).'/README.md');

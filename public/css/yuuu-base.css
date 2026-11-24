@@ -1025,3 +1025,289 @@ fieldset {
         flex-basis: 100%;
     }
 }
+
+/* ---------------------------------------------------------------------
+ * 16. App shell and side menu
+ * ------------------------------------------------------------------- */
+
+/* A side menu and the content, side by side. The shell has its own
+   breakpoint (48rem): a side menu already crowds a tablet, long before
+   the phone width of section 15. */
+.app-shell {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    align-items: start;
+    min-height: 100vh;
+}
+
+/* Lets a wide table or a long word shrink instead of widening the page. */
+.app-shell > * {
+    min-width: 0;
+}
+
+.side-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--yuuu-space-1);
+    padding: var(--yuuu-space-4);
+    background: var(--yuuu-color-surface);
+    border-right: 1px solid var(--yuuu-color-border);
+}
+
+/* The label of a group of links: a <p>, secondary text. */
+.side-nav__group {
+    margin: var(--yuuu-space-4) 0 var(--yuuu-space-1);
+    padding-inline: var(--yuuu-space-3);
+    color: var(--yuuu-color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.side-nav__group:first-child {
+    margin-top: 0;
+}
+
+.side-nav__link {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: var(--yuuu-space-2) var(--yuuu-space-3);
+    border-radius: var(--yuuu-radius-1);
+    color: var(--yuuu-color-text);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.side-nav__link:hover {
+    color: var(--yuuu-color-text);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+/* The current page: not by colour alone. A heavier label, a tinted
+   background and a bar along the start edge. */
+.side-nav__link[aria-current="page"] {
+    background: var(--yuuu-color-accent-soft);
+    color: var(--yuuu-color-accent-ink);
+    box-shadow: inset 3px 0 0 var(--yuuu-color-accent-ink);
+    font-weight: 700;
+}
+
+/* The links sit in a scrolling row on narrow screens: the ring is drawn
+   inside the link, where the scroll area does not clip it. */
+.side-nav__link:focus-visible {
+    outline-offset: -3px;
+}
+
+@media (max-width: 48rem) {
+    .app-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* One row above the content. It scrolls sideways instead of
+       overflowing the page. */
+    .side-nav {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--yuuu-space-2);
+        padding: var(--yuuu-space-2) var(--yuuu-space-4);
+        overflow-x: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--yuuu-color-border);
+    }
+
+    .side-nav__group {
+        flex: none;
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    .side-nav__link {
+        flex: none;
+        white-space: nowrap;
+    }
+
+    .side-nav__link[aria-current="page"] {
+        box-shadow: inset 0 -3px 0 var(--yuuu-color-accent-ink);
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * 17. Tabs, avatar, stat, data list, card action
+ * ------------------------------------------------------------------- */
+
+/* A <nav> of links, or a role="tablist". It scrolls sideways when the
+   labels do not fit. */
+.tabs {
+    display: flex;
+    gap: var(--yuuu-space-1) var(--yuuu-space-4);
+    margin: 0 0 var(--yuuu-space-4);
+    overflow-x: auto;
+    box-shadow: inset 0 -1px 0 var(--yuuu-color-border);
+}
+
+.tabs__link {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: var(--yuuu-space-2) var(--yuuu-space-1);
+    border-bottom: 2px solid transparent;
+    color: var(--yuuu-color-text);
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.tabs__link:hover {
+    color: var(--yuuu-color-text);
+    border-bottom-color: var(--yuuu-color-border-strong);
+}
+
+/* The label stays in the text colour: the 2 px underline in the accent
+   and the heavier weight say which tab is open. */
+.tabs__link[aria-current="page"],
+.tabs__link[aria-selected="true"] {
+    border-bottom-color: var(--yuuu-color-accent-ink);
+    font-weight: 700;
+}
+
+.tabs__link:focus-visible {
+    outline-offset: -3px;
+}
+
+/* A circle: the person's photo, or their initials. */
+.avatar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--yuuu-color-accent-soft);
+    color: var(--yuuu-color-accent-ink);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar--small {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
+}
+
+.avatar--large {
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 1.25rem;
+}
+
+/* A figure and what it counts. */
+.stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--yuuu-space-1);
+}
+
+.stat__label {
+    color: var(--yuuu-color-text-muted);
+    font-size: 0.875rem;
+}
+
+.stat__value {
+    color: var(--yuuu-color-text);
+    font-size: 1.75rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 650;
+    line-height: 1.2;
+}
+
+/* A <dl> of label and value pairs, in two columns. */
+.data-list {
+    display: grid;
+    grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr);
+    gap: var(--yuuu-space-3) var(--yuuu-space-4);
+    margin: 0;
+}
+
+.data-list dt {
+    color: var(--yuuu-color-text-muted);
+}
+
+.data-list dd {
+    margin: 0;
+    color: var(--yuuu-color-text);
+    overflow-wrap: anywhere;
+}
+
+/* A link or a button at the end of the card header: "Edit", "See all".
+   The header lines its title up with it. */
+.card__header:has(> .card__action) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--yuuu-space-2) var(--yuuu-space-4);
+    text-align: start;
+}
+
+.card__action {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    margin-inline-start: auto;
+    padding: var(--yuuu-space-2) var(--yuuu-space-3);
+    border: 0;
+    border-radius: var(--yuuu-radius-1);
+    background: transparent;
+    color: var(--yuuu-color-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media (max-width: 30rem) {
+    .data-list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--yuuu-space-1);
+    }
+
+    .data-list dd {
+        margin-bottom: var(--yuuu-space-3);
+    }
+}
+
+/* ---------------------------------------------------------------------
+ * 18. Compact density: html[data-density="compact"]
+ * ------------------------------------------------------------------- */
+
+html[data-density="compact"] {
+    --yuuu-space-3: 0.625rem;
+    --yuuu-space-4: 0.75rem;
+    --yuuu-space-5: 1.125rem;
+    --yuuu-space-6: 1.5rem;
+    --yuuu-space-7: 2.25rem;
+}
+
+/* Smaller targets only for a precise pointer. A finger keeps the 44 px
+   (2.75rem) of the default density. */
+@media (pointer: fine) {
+    html[data-density="compact"] .btn:not(.btn--small),
+    html[data-density="compact"] .pagination__link,
+    html[data-density="compact"] input:not([type="checkbox"], [type="radio"], [type="file"], [type="hidden"], [type="submit"], [type="button"], [type="reset"]),
+    html[data-density="compact"] select {
+        min-height: 2.25rem;
+    }
+}

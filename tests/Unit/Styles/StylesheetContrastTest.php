@@ -59,12 +59,6 @@ final class StylesheetContrastTest extends TestCase
         // the current .breadcrumb item (on the page or on a card).
         ['--yuuu-color-text', '--yuuu-color-bg'],
         ['--yuuu-color-text', '--yuuu-color-surface'],
-        // .muted, table headers, dt, .empty-state, link hover, the file
-        // input's label. .breadcrumb links and separators,
-        // .pagination__current and the dead end of a .pagination (not a
-        // control, but kept readable on purpose).
-        ['--yuuu-color-text-muted', '--yuuu-color-bg'],
-        ['--yuuu-color-text-muted', '--yuuu-color-surface'],
         // .field-error under a field, on a card or on the page.
         ['--yuuu-color-danger-text', '--yuuu-color-bg'],
         ['--yuuu-color-danger-text', '--yuuu-color-surface'],
@@ -95,11 +89,19 @@ final class StylesheetContrastTest extends TestCase
     ];
 
     /**
-     * Text that is not needed to work: it must reach 4.5:1. Empty for now.
+     * Text that is not needed to work: it must reach 4.5:1.
      *
      * @var list<array{string, string}> foreground, background
      */
-    private const array SECONDARY_PAIRS = [];
+    private const array SECONDARY_PAIRS = [
+        // Muted metadata (T-180): .muted, table headers, dt, .empty-state,
+        // link hover, the file input's label, .stat__label and
+        // .side-nav__group. .breadcrumb links and separators,
+        // .pagination__current and the dead end of a .pagination (not a
+        // control, but kept readable on purpose).
+        ['--yuuu-color-text-muted', '--yuuu-color-bg'],
+        ['--yuuu-color-text-muted', '--yuuu-color-surface'],
+    ];
 
     /**
      * `.btn:hover` and `.btn:active` dim the whole button, text included,
