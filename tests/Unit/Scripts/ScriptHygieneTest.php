@@ -91,6 +91,24 @@ final class ScriptHygieneTest extends TestCase
         self::assertLessThan($listen, $check);
     }
 
+    /**
+     * The current side-nav link or tab is scrolled into view inside its
+     * own row, through the row's scrollLeft: scrollIntoView() and friends
+     * can scroll the page too. It does not need dialogs, so it runs
+     * before the bail-out.
+     */
+    public function testTheCurrentItemScrollsItsRowOnly(): void
+    {
+        $source = self::source();
+        $scroll = strpos($source, 'scrollLeft');
+
+        self::assertNotFalse($scroll);
+        self::assertStringContainsString('.side-nav', $source);
+        self::assertStringContainsString('.tabs', $source);
+        self::assertDoesNotMatchRegularExpression('/\bscroll(IntoView|To|By)\b|\bscroll\s*\(/', $source);
+        self::assertLessThan((int) strpos($source, 'prototype.showModal'), $scroll);
+    }
+
     /** Every `data-` attribute the script reacts to is public API: documented. */
     public function testEveryDataAttributeIsDocumentedInTheReadme(): void
     {

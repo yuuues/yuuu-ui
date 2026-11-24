@@ -6,7 +6,7 @@ The shared base stylesheet of the **yuuu** suite, shipped as a Symfony bundle: y
 - **Neutral** by design. Each app brings its personality through four brand tokens.
 - **WCAG AA required, AAA targeted.** Tested in light *and* dark mode: every text pair reaches 4.5:1 (AA), control outlines 3:1. Every default text pair at rest also reaches **7:1 (AAA)**; see §7.
 - **No external resources**: no web fonts, no CDN, no remote `url()`, no `@import`. Works under CSP `style-src 'self'`, with no inline styles needed.
-- An optional script, `yuuu-ui.js` (under 3 KiB, no dependencies), that opens forms and confirmations in native `<dialog>` modals. **Progressive enhancement**: without it, links navigate and forms submit, and nothing breaks. Works under CSP `script-src 'self'`.
+- An optional script, `yuuu-ui.js` (under 3 KiB, no dependencies), that opens forms and confirmations in native `<dialog>` modals and scrolls the current side-menu link or tab into view in its row. **Progressive enhancement**: without it, links navigate and forms submit, and nothing breaks. Works under CSP `script-src 'self'`.
 - An error page, `@YuuuUi/error.html.twig`, on the card layout, for the app's 403/404/500 pages and a "page expired" case.
 - Two Twig functions, `yuuu_ui_stylesheet()` and `yuuu_ui_script()`, that link the files with a content fingerprint for cache busting, computed once when the container is compiled.
 - An npm package, `@yuuues/yuuu-ui`, installed from a git tag (no registry), so JavaScript apps built with Vite can **import** the CSS, inlined into a single HTML file if they need to; see §12.
@@ -86,7 +86,7 @@ Run it on **every deploy**, not only on the first one. The fingerprints in the U
     <link rel="stylesheet" href="{{ yuuu_ui_stylesheet() }}">
     {# The app's own layer, always AFTER the base. #}
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-    {# Optional: only for the dialogs of §5. `defer`: it runs once the page is parsed. #}
+    {# Optional: the dialogs of §5, and the current link or tab scrolled into view. `defer`: it runs once the page is parsed. #}
     <script src="{{ yuuu_ui_script() }}" defer></script>
 </head>
 <body>
@@ -372,13 +372,15 @@ A management area: the side menu on the start side, the content beside it. Under
 
 The shell is as tall as its content, so on a short desktop page the side menu column ends early. Give it the height left under the top bar: `min-height: calc(100vh - <header height>)` on `.app-shell`, or put the bar and the shell in a column (`display: flex; flex-direction: column; min-height: 100vh`) and give `.app-shell` `flex: 1`. The preview page (`docs/preview/index.html`) does the second.
 
+With `yuuu-ui.js` loaded (§3), the current link is scrolled into view inside the row on page load, so a late link is not left off-screen on a phone; only the row scrolls, never the page. Without the script the row starts at its first link.
+
 Accessibility: `aria-current="page"` marks the current link; the colour is not the only signal, the weight changes too and a bar marks the edge. Links are 2.75rem tall, the focus ring is the shared one, and `.side-nav__group` is secondary text (4.5:1).
 
 ### Tabs, people and figures
 
 #### `.tabs`, `.tabs__link`
 
-Tabs that are links to other pages (a `<nav>`), or the tabs of a widget (`role="tablist"`, then `aria-selected` on the open one). The row scrolls sideways when the labels do not fit.
+Tabs that are links to other pages (a `<nav>`), or the tabs of a widget (`role="tablist"`, then `aria-selected` on the open one). The row scrolls sideways when the labels do not fit. With `yuuu-ui.js` loaded (§3), the open tab (`aria-current="page"` or `aria-selected="true"`) is scrolled into view inside the row on page load; only the row scrolls, never the page. A widget that switches tabs later keeps its own scrolling.
 
 ```html
 <nav class="tabs" aria-label="Employee">
